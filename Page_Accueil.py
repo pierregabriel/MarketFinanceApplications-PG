@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import subprocess
 import time
-import base64
 from pathlib import Path
 
 # ========== 1. Configuration ==========
@@ -19,7 +18,7 @@ REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"
 REPO_PATH = "Applications-PG"
 
 # ========== 3. Styles CSS ==========
-def local_css():
+def apply_styles():
     st.markdown("""
     <style>
         .main-header {
@@ -36,10 +35,6 @@ def local_css():
             margin-bottom: 20px;
             border-left: 5px solid #1E88E5;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
-        }
-        .app-card:hover {
-            transform: translateY(-5px);
         }
         .card-title {
             color: #1E88E5;
@@ -51,19 +46,6 @@ def local_css():
             color: #555;
             margin-bottom: 15px;
         }
-        .launch-btn {
-            background-color: #1E88E5;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-            display: inline-block;
-        }
-        .launch-btn:hover {
-            background-color: #1565C0;
-            text-decoration: none;
-        }
         .footer {
             text-align: center;
             padding: 20px 0;
@@ -71,32 +53,6 @@ def local_css():
             font-size: 0.8rem;
             margin-top: 30px;
             border-top: 1px solid #eee;
-        }
-        .sidebar-content {
-            padding: 20px 0;
-        }
-        .password-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 30px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        .success-message {
-            padding: 10px;
-            background-color: #d4edda;
-            color: #155724;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        .error-message {
-            padding: 10px;
-            background-color: #f8d7da;
-            color: #721c24;
-            border-radius: 5px;
-            margin-bottom: 15px;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -126,8 +82,8 @@ def list_python_files(folder_path):
                 full_path = os.path.join(root, file)
                 relative_path = os.path.relpath(full_path, REPO_PATH)
                 
-                # Extraire une description de base du fichier (les 3 premières lignes de commentaire)
-                description = "Aucune description disponible"
+                # Extraire une description de base du fichier (les commentaires initiaux)
+                description = "Application Streamlit"
                 try:
                     with open(full_path, 'r', encoding='utf-8') as f:
                         lines = f.readlines()[:15]  # Lire les 15 premières lignes
@@ -154,44 +110,52 @@ def list_python_files(folder_path):
     return python_files, python_info
 
 # ========== 6. Fonction pour lancer une application ==========
-def launch_app(app_path):
+def run_app(app_path):
     try:
-        port = find_free_port()
-        process = subprocess.Popen(["streamlit", "run", app_path, "--server.port", str(port)])
-        return process, port
+        # Exécuter l'application Streamlit
+        cmd = f"streamlit run {app_path}"
+        st.code(cmd)
+        st.info(f"Pour lancer cette application, ouvrez un terminal et exécutez la commande ci-dessus.")
+        
+        # Option pour la lancer directement (si possible)
+        if st.button("Tenter d'ouvrir l'application maintenant"):
+            try:
+                # Vérifier si nous sommes sur Streamlit Cloud ou en local
+                if os.environ.get('STREAMLIT_SHARING') or os.environ.get('STREAMLIT_CLOUD'):
+                    st.warning("Cette fonctionnalité n'est pas disponible sur Streamlit Cloud. Veuillez utiliser la commande manuellement.")
+                else:
+                    # Tenter de lancer l'application en local
+                    subprocess.Popen(["streamlit", "run", app_path])
+                    st.success("Application lancée! Veuillez vérifier les autres fenêtres ou onglets de votre navigateur.")
+            except Exception as e:
+                st.error(f"Erreur lors du lancement: {str(e)}")
+        
     except Exception as e:
-        st.error(f"Erreur lors du lancement de l'application: {str(e)}")
-        return None, None
-
-def find_free_port():
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
+        st.error(f"Erreur: {str(e)}")
 
 # ========== 7. Protection par mot de passe ==========
 def password_protect():
-    local_css()
+    st.title("🔒 Accès sécurisé")
     
-    st.markdown('<div class="password-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="main-header">🔒 Accès sécurisé</h1>', unsafe_allow_html=True)
-    
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+        
+    if st.session_state.authenticated:
+        return True
+        
     password = st.text_input("Entrez le mot de passe :", type="password")
     
     if password == CORRECT_PASSWORD:
-        st.markdown('<div class="success-message">🔓 Accès autorisé !</div>', unsafe_allow_html=True)
+        st.success("🔓 Accès autorisé !")
         st.session_state.authenticated = True
-        st.session_state.password_entered = True
-        st.rerun()
+        return True
     elif password:
-        st.markdown('<div class="error-message">❌ Mot de passe incorrect</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
+        st.error("❌ Mot de passe incorrect")
+        
     return False
 
-# ========== 8. Fonction pour créer un joli affichage des applications ==========
-def display_app_cards(python_info):
+# ========== 8. Fonction pour afficher les applications ==========
+def display_apps(python_info):
     col1, col2 = st.columns(2)
     
     for i, (rel_path, info) in enumerate(python_info.items()):
@@ -200,41 +164,14 @@ def display_app_cards(python_info):
             <div class="app-card">
                 <div class="card-title">{info['name']}</div>
                 <p class="card-description">{info['description']}</p>
-                <button id="launch-{i}" class="launch-btn">Lancer l'application</button>
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button(f"Lancer {info['name']}", key=f"btn_{i}"):
-                with st.spinner(f"Lancement de {info['name']}..."):
-                    process, port = launch_app(info['path'])
-                    if process and port:
-                        st.success(f"Application lancée avec succès sur le port {port}!")
-                        st.markdown(f"[Ouvrir l'application dans un nouvel onglet](http://localhost:{port})")
-                        st.session_state.active_process = process
-                        st.session_state.active_port = port
+            if st.button(f"📱 Détails de {info['name']}", key=f"btn_{i}"):
+                st.session_state.selected_app = info['path']
 
-# ========== 9. Fonction pour afficher l'image de fond ==========
-def add_bg_from_local(image_file):
-    with open(image_file, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-    
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url(data:image/png;base64,{encoded_string});
-            background-size: cover;
-            background-repeat: no-repeat;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# ========== 10. Sidebar ==========
+# ========== 9. Sidebar ==========
 def display_sidebar():
-    st.sidebar.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
-    st.sidebar.image("https://via.placeholder.com/200x80.png?text=Mon+Logo", use_column_width=True)
     st.sidebar.title("Menu")
     
     # Actions de synchronisation du dépôt
@@ -263,28 +200,17 @@ def display_sidebar():
     # Déconnexion
     if st.sidebar.button("Déconnexion"):
         st.session_state.authenticated = False
-        st.session_state.password_entered = False
-        st.experimental_rerun()
-    
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-# ========== 11. Main ==========
+# ========== 10. Main ==========
 def main():
-    # Initialiser les variables de session
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-    if 'password_entered' not in st.session_state:
-        st.session_state.password_entered = False
-    if 'active_process' not in st.session_state:
-        st.session_state.active_process = None
-    if 'active_port' not in st.session_state:
-        st.session_state.active_port = None
+    apply_styles()
     
-    local_css()
+    # Initialiser les variables de session
+    if 'selected_app' not in st.session_state:
+        st.session_state.selected_app = None
     
     # Vérifier l'authentification
-    if not st.session_state.authenticated:
-        password_protect()
+    if not password_protect():
         return
     
     # Afficher la barre latérale (sidebar)
@@ -296,8 +222,8 @@ def main():
     # Introduction
     st.markdown("""
     Bienvenue sur mon portfolio d'applications Streamlit ! Vous trouverez ci-dessous
-    mes différentes applications et projets. Cliquez sur "Lancer l'application" pour ouvrir
-    l'application de votre choix dans un nouvel onglet.
+    mes différentes applications et projets. Cliquez sur une application pour voir
+    les détails et les instructions de lancement.
     """)
     
     # Cloner/synchroniser le dépôt si nécessaire
@@ -307,11 +233,45 @@ def main():
     # Lister les fichiers
     python_files, python_info = list_python_files(REPO_PATH)
     
-    if not python_files:
-        st.warning("⚠️ Aucune application trouvée dans le dépôt.")
+    # Afficher les détails d'une application spécifique ou la liste des applications
+    if st.session_state.selected_app:
+        st.header("Détails de l'application")
+        
+        # Trouver les informations de l'application sélectionnée
+        selected_info = None
+        selected_path = None
+        for rel_path, info in python_info.items():
+            if info['path'] == st.session_state.selected_app:
+                selected_info = info
+                selected_path = rel_path
+                break
+        
+        if selected_info:
+            st.subheader(selected_info['name'])
+            st.write(selected_info['description'])
+            
+            # Afficher le code source
+            with open(selected_info['path'], 'r', encoding='utf-8') as f:
+                code = f.read()
+                with st.expander("Voir le code source"):
+                    st.code(code, language="python")
+            
+            # Option pour lancer l'application
+            st.subheader("Lancer l'application")
+            run_app(selected_info['path'])
+            
+            if st.button("Retour à la liste"):
+                st.session_state.selected_app = None
+                st.experimental_set_query_params()  # Effacer les paramètres d'URL
+        else:
+            st.error("Application non trouvée")
+            st.session_state.selected_app = None
     else:
-        # Afficher les applications sous forme de cartes
-        display_app_cards(python_info)
+        # Afficher la liste des applications
+        if not python_files:
+            st.warning("⚠️ Aucune application trouvée dans le dépôt.")
+        else:
+            display_apps(python_info)
     
     # Pied de page
     st.markdown('<div class="footer">© 2024 - Mon Portfolio d\'Applications</div>', unsafe_allow_html=True)
