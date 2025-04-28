@@ -280,7 +280,7 @@ def login_page():
             if validate_password(password):
                 st.session_state.authenticated = True
                 st.session_state.projects_data = fetch_projects_data()
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.markdown("<div class='error-message'>Mot de passe incorrect. Veuillez réessayer.</div>", unsafe_allow_html=True)
         
