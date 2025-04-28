@@ -21,7 +21,7 @@ with col1:
     st.subheader("Stratégies d'Options")
     if st.button("Accéder aux Grecs"):
         # Redirection vers la page Stratégies
-        st.switch_page("Grecs.py")
+        st.switch_page("Grecs")
 
 with col2:
     st.subheader("Pricing d'Options")
