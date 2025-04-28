@@ -1,11 +1,11 @@
 import streamlit as st
 import os
 import subprocess
-import time
-import tempfile
-import shutil
+import importlib.util
+import inspect
 import sys
-import signal
+from pathlib import Path
+import base64
 
 # ========== 1. Configuration ==========
 st.set_page_config(
@@ -19,10 +19,6 @@ st.set_page_config(
 CORRECT_PASSWORD = "monmotdepasse2024"
 REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"
 REPO_PATH = "Applications-PG"
-
-# Dictionnaire global pour suivre les processus actifs
-if 'running_processes' not in st.session_state:
-    st.session_state.running_processes = {}
 
 # ========== 3. Styles CSS ==========
 def apply_styles():
@@ -62,9 +58,6 @@ def apply_styles():
             font-weight: 500;
             margin-right: 10px;
         }
-        .app-button:hover {
-            background-color: #0D47A1;
-        }
         .footer {
             text-align: center;
             padding: 20px 0;
@@ -73,19 +66,39 @@ def apply_styles():
             margin-top: 30px;
             border-top: 1px solid #eee;
         }
-        .status-running {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: 500;
+        div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        .status-stopped {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: 500;
+        .embedded-app {
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #fafafa;
+        }
+        .app-container {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f5f7fa;
+            margin-top: 20px;
+        }
+        .app-header {
+            background-color: #1E88E5;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+            font-weight: 600;
+        }
+        .app-body {
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            padding: 20px;
+            background-color: white;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -142,128 +155,37 @@ def list_python_files(folder_path):
     
     return python_files, python_info
 
-# ========== 6. Fonction pour trouver un port disponible ==========
-def find_free_port():
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
-
-# ========== 7. Fonction pour lancer une application ==========
-def launch_app(app_path, app_name):
+# ========== 6. Fonction pour importer dynamiquement et exécuter une application ==========
+def load_and_run_app(app_path):
+    # Ajouter le répertoire parent au chemin de recherche de modules
+    parent_dir = os.path.dirname(app_path)
+    if parent_dir not in sys.path:
+        sys.path.append(parent_dir)
+    
+    # Charger le module dynamiquement
+    module_name = os.path.basename(app_path).replace('.py', '')
+    spec = importlib.util.spec_from_file_location(module_name, app_path)
+    module = importlib.util.module_from_spec(spec)
+    
     try:
-        # Vérifier si l'application est déjà en cours d'exécution
-        if app_path in st.session_state.running_processes:
-            process_info = st.session_state.running_processes[app_path]
-            # Vérifier si le processus est toujours actif
-            poll_result = process_info['process'].poll()
-            if poll_result is None:  # Le processus est toujours en cours d'exécution
-                st.success(f"L'application {app_name} est déjà en cours d'exécution!")
-                st.markdown(f"[Ouvrir l'application dans un nouvel onglet](http://localhost:{process_info['port']})")
-                return
-            else:
-                # Le processus s'est terminé, le supprimer de notre dictionnaire
-                del st.session_state.running_processes[app_path]
+        # Exécuter le module
+        spec.loader.exec_module(module)
         
-        # Trouver un port disponible
-        port = find_free_port()
-        
-        # Créer un script temporaire pour démarrer l'application
-        with tempfile.NamedTemporaryFile(suffix='.py', delete=False, mode='w') as f:
-            # Écrire un script qui exécutera l'application
-            f.write(f"""
-import subprocess
-import os
-import signal
-import sys
-
-def run_app():
-    try:
-        # Démarrer l'application Streamlit sur le port spécifié
-        cmd = ["streamlit", "run", "{app_path}", "--server.port={port}"]
-        process = subprocess.Popen(cmd)
-        print(f"Application démarrée sur le port {port} avec PID {{process.pid}}")
-        
-        # Attendre que l'utilisateur ferme le script
-        try:
-            process.wait()
-        except KeyboardInterrupt:
-            # Gérer l'interruption proprement
-            process.terminate()
-            process.wait(timeout=5)
-            if process.poll() is None:
-                process.kill()
-            print("Application arrêtée proprement")
-
-    except Exception as e:
-        print(f"Erreur lors du lancement de l'application: {{e}}")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    run_app()
-""")
-        
-        # Obtenir le nom du fichier temporaire
-        temp_script = f.name
-        
-        # Lancer le script en arrière-plan
-        process = subprocess.Popen([sys.executable, temp_script])
-        
-        # Attendre un court instant pour que l'application démarre
-        time.sleep(2)
-        
-        # Stocker les informations du processus dans la session
-        st.session_state.running_processes[app_path] = {
-            'process': process,
-            'port': port,
-            'script': temp_script
-        }
-        
-        # Message de succès
-        st.success(f"Application {app_name} lancée avec succès!")
-        st.markdown(f"[Ouvrir l'application dans un nouvel onglet](http://localhost:{port})")
+        # Chercher les fonctions principales comme "main()" ou la logique Streamlit directe
+        if hasattr(module, 'main'):
+            module.main()
+        else:
+            # Si pas de fonction main(), le script est probablement structuré avec
+            # des appels directs à Streamlit, qui ont déjà été exécutés lors du chargement
+            pass
         
         return True
-    
     except Exception as e:
-        st.error(f"Erreur lors du lancement de l'application: {str(e)}")
+        st.error(f"Erreur lors de l'exécution de l'application: {str(e)}")
+        st.code(str(e), language="python")
         return False
 
-# ========== 8. Fonction pour arrêter une application ==========
-def stop_app(app_path):
-    if app_path in st.session_state.running_processes:
-        process_info = st.session_state.running_processes[app_path]
-        
-        try:
-            # Tenter d'arrêter proprement le processus
-            process_info['process'].terminate()
-            
-            # Attendre jusqu'à 5 secondes pour que le processus se termine
-            try:
-                process_info['process'].wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                # Si le processus ne se termine pas proprement, le forcer
-                process_info['process'].kill()
-                process_info['process'].wait()
-            
-            # Supprimer le script temporaire
-            if os.path.exists(process_info['script']):
-                os.remove(process_info['script'])
-            
-            # Retirer le processus de notre dictionnaire
-            del st.session_state.running_processes[app_path]
-            
-            st.success("Application arrêtée avec succès!")
-            return True
-        
-        except Exception as e:
-            st.error(f"Erreur lors de l'arrêt de l'application: {str(e)}")
-            return False
-    else:
-        st.warning("L'application n'est pas en cours d'exécution.")
-        return False
-
-# ========== 9. Protection par mot de passe ==========
+# ========== 7. Protection par mot de passe ==========
 def password_protect():
     st.title("🔒 Accès sécurisé")
     
@@ -284,8 +206,63 @@ def password_protect():
         
     return False
 
+# ========== 8. Fonction pour isoler et afficher le code d'une application ==========
+def display_app_code(app_path):
+    with open(app_path, 'r', encoding='utf-8') as f:
+        code = f.read()
+    
+    with st.expander("Voir le code source"):
+        st.code(code, language="python")
+
+# ========== 9. Fonction pour afficher une application dans un conteneur isolé ==========
+def display_app_content(app_path, app_name):
+    st.markdown(f"""
+    <div class="app-header">
+        {app_name}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.container():
+        st.markdown('<div class="app-body">', unsafe_allow_html=True)
+        
+        # Sauvegarder l'état actuel des widgets Streamlit
+        old_widgets = st.session_state.to_dict()
+        
+        # Créer un préfixe unique pour cet app pour éviter les conflits de clés
+        app_key_prefix = f"app_{hash(app_path)}_"
+        
+        # Rediriger temporairement la sortie standard pour éviter les conflits
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        
+        try:
+            # Modifier sys.argv pour simuler l'exécution de l'application
+            old_argv = sys.argv.copy()
+            sys.argv = [app_path]
+            
+            # Essayer d'exécuter l'application
+            load_and_run_app(app_path)
+            
+            # Restaurer sys.argv
+            sys.argv = old_argv
+            
+        except Exception as e:
+            st.error(f"Impossible d'intégrer cette application. Erreur: {str(e)}")
+        
+        finally:
+            # Restaurer la sortie standard
+            sys.stdout.close()
+            sys.stdout = old_stdout
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # ========== 10. Affichage des applications ==========
 def display_apps(python_info):
+    # Initialiser la sélection si elle n'existe pas
+    if 'selected_app' not in st.session_state:
+        st.session_state.selected_app = None
+    
+    # Afficher la liste des applications
     for rel_path, info in python_info.items():
         with st.container():
             st.markdown(f"""
@@ -295,43 +272,76 @@ def display_apps(python_info):
             </div>
             """, unsafe_allow_html=True)
             
-            col1, col2, col3 = st.columns([1, 1, 3])
+            col1, col2, col3 = st.columns([1, 1, 1])
             
-            # Vérifier si l'application est en cours d'exécution
-            is_running = False
-            port = None
-            
-            if info['path'] in st.session_state.running_processes:
-                process_info = st.session_state.running_processes[info['path']]
-                if process_info['process'].poll() is None:  # Le processus est actif
-                    is_running = True
-                    port = process_info['port']
-                else:
-                    # Le processus s'est terminé, le supprimer de notre dictionnaire
-                    del st.session_state.running_processes[info['path']]
-            
-            # Bouton pour lancer l'application
             with col1:
-                if not is_running:
-                    if st.button(f"🚀 Lancer", key=f"launch_{rel_path}"):
-                        launch_app(info['path'], info['name'])
-                else:
-                    st.markdown(f'<span class="status-running">⚡ En exécution (port: {port})</span>', unsafe_allow_html=True)
+                if st.button(f"📱 Afficher l'application", key=f"show_{rel_path}"):
+                    st.session_state.selected_app = info['path']
+                    # Forcer un rechargement de la page
+                    st.experimental_rerun()
             
-            # Bouton pour arrêter l'application
             with col2:
-                if is_running:
-                    if st.button(f"⏹️ Arrêter", key=f"stop_{rel_path}"):
-                        stop_app(info['path'])
-                else:
-                    st.markdown(f'<span class="status-stopped">⏹️ Arrêtée</span>', unsafe_allow_html=True)
+                if st.button(f"🔍 Voir le code", key=f"code_{rel_path}"):
+                    with st.expander(f"Code source de {info['name']}", expanded=True):
+                        with open(info['path'], 'r', encoding='utf-8') as f:
+                            code = f.read()
+                        st.code(code, language="python")
             
-            # Lien pour ouvrir l'application si elle est en cours d'exécution
+            # Option pour exécuter le code avec exec (pour des scripts simples)
             with col3:
-                if is_running:
-                    st.markdown(f"[🌐 Ouvrir l'application dans un nouvel onglet](http://localhost:{port})")
+                if st.button(f"🚀 Exécuter directement", key=f"exec_{rel_path}"):
+                    try:
+                        # Créer un iframe ou un conteneur pour isoler l'app
+                        st.markdown('<div class="embedded-app">', unsafe_allow_html=True)
+                        st.subheader(f"Application: {info['name']}")
+                        
+                        # Méthode 1: Importer et exécuter dynamiquement
+                        load_and_run_app(info['path'])
+                        
+                        st.markdown('</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Erreur lors de l'exécution: {str(e)}")
             
             st.markdown("---")
+    
+    # Afficher l'application sélectionnée si elle existe
+    if st.session_state.selected_app:
+        app_path = st.session_state.selected_app
+        
+        # Trouver les infos de l'app
+        app_name = "Application"
+        for info in python_info.values():
+            if info['path'] == app_path:
+                app_name = info['name']
+                break
+        
+        st.markdown('<div class="app-container">', unsafe_allow_html=True)
+        
+        # En-tête de l'application
+        col1, col2 = st.columns([5, 1])
+        col1.header(f"📱 {app_name}")
+        if col2.button("❌ Fermer"):
+            st.session_state.selected_app = None
+            st.experimental_rerun()
+        
+        # Contenu de l'application
+        try:
+            # Importer et exécuter l'application
+            st.markdown('<div class="embedded-app">', unsafe_allow_html=True)
+            
+            # Méthode pour intégrer l'app
+            with st.spinner("Chargement de l'application..."):
+                display_app_content(app_path, app_name)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Code source
+            display_app_code(app_path)
+            
+        except Exception as e:
+            st.error(f"Impossible d'afficher cette application. Erreur: {str(e)}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== 11. Sidebar ==========
 def display_sidebar():
@@ -352,12 +362,11 @@ def display_sidebar():
         except:
             pass
     
-    # Arrêter toutes les applications
-    if st.session_state.running_processes:
-        if st.sidebar.button("⏹️ Arrêter toutes les applications"):
-            for app_path in list(st.session_state.running_processes.keys()):
-                stop_app(app_path)
-            st.sidebar.success("Toutes les applications ont été arrêtées.")
+    # Option avancée: effacer toutes les sélections
+    if st.session_state.get('selected_app'):
+        if st.sidebar.button("🧹 Réinitialiser la vue"):
+            st.session_state.selected_app = None
+            st.experimental_rerun()
     
     st.sidebar.markdown("---")
     
@@ -369,10 +378,8 @@ def display_sidebar():
     
     # Déconnexion
     if st.sidebar.button("🔑 Déconnexion"):
-        # Arrêter toutes les applications avant de se déconnecter
-        for app_path in list(st.session_state.running_processes.keys()):
-            stop_app(app_path)
-        st.session_state.authenticated = False
+        st.session_state.clear()
+        st.experimental_rerun()
 
 # ========== 12. Main ==========
 def main():
@@ -382,7 +389,7 @@ def main():
     if not password_protect():
         return
     
-    # Afficher la barre latérale (sidebar)
+    # Afficher la barre latérale
     display_sidebar()
     
     # Afficher le contenu principal
@@ -391,8 +398,9 @@ def main():
     # Introduction
     st.markdown("""
     Bienvenue sur mon portfolio d'applications Streamlit ! Vous trouverez ci-dessous
-    mes différentes applications et projets. Cliquez sur "Lancer" pour démarrer une
-    application et l'ouvrir dans un nouvel onglet.
+    mes différentes applications et projets. Cliquez sur "Afficher l'application" pour 
+    voir l'application directement dans cette page, ou sur "Exécuter directement" pour 
+    un aperçu rapide.
     """)
     
     # Cloner/synchroniser le dépôt si nécessaire
@@ -414,14 +422,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    finally:
-        # S'assurer que tous les processus sont arrêtés lorsque l'application principale se ferme
-        if 'running_processes' in st.session_state:
-            for app_path, process_info in list(st.session_state.running_processes.items()):
-                try:
-                    process_info['process'].terminate()
-                    process_info['process'].wait(timeout=5)
-                    if os.path.exists(process_info['script']):
-                        os.remove(process_info['script'])
-                except:
-                    pass
+    except Exception as e:
+        st.error(f"Erreur globale: {str(e)}")
