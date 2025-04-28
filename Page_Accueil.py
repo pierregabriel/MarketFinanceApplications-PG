@@ -1,15 +1,11 @@
-# Page_Accueil.py
-
 import streamlit as st
 import os
 import subprocess
-import importlib.util
-import sys
 
 # ========== 1. Paramètres ==========
-CORRECT_PASSWORD = "monmotdepasse2024"  # Ton mot de passe ici
-REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"  # Ton dépôt GitHub
-REPO_PATH = "Applications-PG"  # Dossier de clonage local
+CORRECT_PASSWORD = "monmotdepasse2024"
+REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"
+REPO_PATH = "Applications-PG"
 
 # ========== 2. Fonction pour cloner le dépôt ==========
 def clone_repo(repo_url, repo_path):
@@ -26,13 +22,7 @@ def list_python_files(folder_path):
                 python_files.append(full_path)
     return python_files
 
-# ========== 4. Fonction pour exécuter dynamiquement un fichier ==========
-def run_selected_app(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        code = f.read()
-    exec(code, globals())
-
-# ========== 5. Mot de passe ==========
+# ========== 4. Mot de passe ==========
 def password_protect():
     st.title("🔒 Page sécurisée")
     password = st.text_input("Entrez le mot de passe :", type="password")
@@ -43,13 +33,13 @@ def password_protect():
         st.error("❌ Mot de passe incorrect.")
     return False
 
-# ========== 6. Main ==========
+# ========== 5. Main ==========
 def main():
     access_granted = password_protect()
 
     if access_granted:
         st.title("📚 Mes Applications Streamlit")
-        st.write("Choisissez une application à lancer :")
+        st.write("Choisissez une application à ouvrir :")
 
         # Cloner le repo
         clone_repo(REPO_URL, REPO_PATH)
@@ -63,11 +53,12 @@ def main():
             file_names = [os.path.relpath(f, REPO_PATH) for f in python_files]
             selected_filename = st.selectbox("📄 Sélectionnez une application :", file_names)
 
-            selected_file_path = os.path.join(REPO_PATH, selected_filename)
+            st.info("👉 Cliquez ci-dessous pour ouvrir votre app dans un nouvel onglet.")
 
-            if st.button("▶️ Lancer l'application sélectionnée"):
-                st.success(f"🚀 Application en cours : {selected_filename}")
-                run_selected_app(selected_file_path)
+            # Lien pour ouvrir directement l'app (hypothèse : tu utilises streamlit-multipage ou structure adaptée)
+            if st.button("🌐 Ouvrir l'application sélectionnée"):
+                app_url = f"/{REPO_PATH}/{selected_filename}"  # Chemin relatif
+                st.markdown(f"[🚀 Lancer {selected_filename}](http://localhost:8501/{app_url})", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
