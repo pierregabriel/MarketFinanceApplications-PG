@@ -3,5 +3,4 @@ numpy
 pandas 
 matplotlib
 scipy
-plotly.graph_objects 
 plotly
