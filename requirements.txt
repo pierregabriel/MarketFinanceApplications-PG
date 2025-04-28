@@ -1,8 +1,8 @@
-streamlit as st
-numpy as np
-pandas as pd
-matplotlib.pyplot as plt
-scipy.stats as si
-plotly.graph_objects as go
-plotly.express as px
-from plotly.subplots import make_subplots
+streamlit
+numpy 
+pandas 
+matplotlib.pyplot 
+scipy.stats 
+plotly.graph_objects 
+plotly.express 
+
