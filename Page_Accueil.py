@@ -1,426 +1,383 @@
 import streamlit as st
-import os
-import subprocess
-import importlib.util
-import inspect
-import sys
-from pathlib import Path
 import base64
+import requests
+import os
+import json
+import time
+from PIL import Image
+import io
+import hashlib
+import re
 
-# ========== 1. Configuration ==========
+# Configuration de la page
 st.set_page_config(
-    page_title="Portfolio d'Applications",
+    page_title="Portfolio de Projets",
     page_icon="🚀",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# ========== 2. Paramètres ==========
-CORRECT_PASSWORD = "monmotdepasse2024"
-REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"
-REPO_PATH = "Applications-PG"
+# Définition des couleurs
+COLOR_PRIMARY = "#4F46E5"  # Indigo
+COLOR_SECONDARY = "#10B981"  # Vert émeraude
+COLOR_BACKGROUND = "#F9FAFB"  # Gris très clair
+COLOR_TEXT = "#1F2937"  # Gris foncé
+COLOR_LIGHT_TEXT = "#6B7280"  # Gris moyen
+COLOR_ACCENT = "#F59E0B"  # Ambre
 
-# ========== 3. Styles CSS ==========
-def apply_styles():
-    st.markdown("""
+# CSS personnalisé
+def load_css():
+    css = f"""
     <style>
-        .main-header {
-            font-size: 2.5rem;
-            color: #1E88E5;
-            text-align: center;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-        .app-card {
-            background-color: #f8f9fa;
+        /* Styles globaux */
+        .stApp {{
+            background-color: {COLOR_BACKGROUND};
+            color: {COLOR_TEXT};
+        }}
+        
+        /* Titres */
+        h1, h2, h3, h4, h5, h6 {{
+            color: {COLOR_TEXT};
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }}
+        
+        /* Conteneur de projet */
+        .project-card {{
+            background-color: white;
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
-            border-left: 5px solid #1E88E5;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .card-title {
-            color: #1E88E5;
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        .card-description {
-            color: #555;
-            margin-bottom: 15px;
-        }
-        .app-button {
-            background-color: #1E88E5;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }}
+        .project-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }}
+        
+        /* Séparateur */
+        .separator {{
+            height: 3px;
+            background: linear-gradient(90deg, {COLOR_PRIMARY}, {COLOR_SECONDARY});
+            margin: 20px 0;
+            border-radius: 2px;
+        }}
+        
+        /* Boutons */
+        .custom-button {{
+            background-color: {COLOR_PRIMARY};
             color: white;
             border: none;
             border-radius: 5px;
             padding: 10px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }}
+        .custom-button:hover {{
+            background-color: #3730A3;
+        }}
+        
+        /* Badge de technologie */
+        .tech-badge {{
+            display: inline-block;
+            background-color: {COLOR_BACKGROUND};
+            color: {COLOR_TEXT};
+            border-radius: 15px;
+            padding: 5px 10px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8em;
             font-weight: 500;
-            margin-right: 10px;
-        }
-        .footer {
+        }}
+        
+        /* Animation de fade-in */
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(20px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        
+        .fade-in {{
+            animation: fadeIn 0.6s ease forwards;
+        }}
+        
+        /* Style d'entrée de texte */
+        input[type="text"], input[type="password"] {{
+            border: 1px solid #E5E7EB;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            width: 100%;
+            font-size: 1em;
+        }}
+        
+        /* Message d'erreur */
+        .error-message {{
+            color: #DC2626;
+            background-color: #FEE2E2;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }}
+        
+        /* Style du header */
+        .header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }}
+        
+        /* Style du footer */
+        .footer {{
             text-align: center;
             padding: 20px 0;
-            color: #888;
-            font-size: 0.8rem;
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-        }
-        div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
-            background-color: white;
+            color: {COLOR_LIGHT_TEXT};
+            font-size: 0.9em;
+            margin-top: 50px;
+        }}
+        
+        /* Style pour la zone de démonstration de projet */
+        .project-demo {{
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .embedded-app {
-            border: 2px solid #eee;
-            border-radius: 10px;
-            padding: 10px;
             margin-top: 20px;
-            background-color: #fafafa;
-        }
-        .app-container {
-            padding: 20px;
-            border-radius: 10px;
-            background-color: #f5f7fa;
-            margin-top: 20px;
-        }
-        .app-header {
-            background-color: #1E88E5;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px 5px 0 0;
-            font-weight: 600;
-        }
-        .app-body {
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 5px 5px;
-            padding: 20px;
             background-color: white;
-        }
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }}
+        
+        /* Styles pour écrans mobiles */
+        @media (max-width: 768px) {{
+            .project-card {{
+                padding: 15px;
+            }}
+        }}
     </style>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(css, unsafe_allow_html=True)
 
-# ========== 4. Fonction pour cloner/mettre à jour le dépôt ==========
-def sync_repo(repo_url, repo_path):
-    if not os.path.exists(repo_path):
-        with st.spinner("Clonage du dépôt en cours..."):
-            subprocess.run(["git", "clone", repo_url, repo_path])
-        st.success("Dépôt cloné avec succès!")
-    else:
-        try:
-            with st.spinner("Mise à jour du dépôt..."):
-                subprocess.run(["git", "-C", repo_path, "pull"])
-            st.success("Dépôt mis à jour avec succès!")
-        except Exception as e:
-            st.error(f"Erreur lors de la mise à jour: {str(e)}")
+# Initialisation de l'état de session si ce n'est pas fait
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
 
-# ========== 5. Fonction pour lister les fichiers Python ==========
-def list_python_files(folder_path):
-    python_files = []
-    python_info = {}  # Pour stocker les informations supplémentaires
-    
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".py") and file != os.path.basename(__file__):
-                full_path = os.path.join(root, file)
-                relative_path = os.path.relpath(full_path, REPO_PATH)
-                
-                # Extraire une description de base du fichier (les commentaires initiaux)
-                description = "Application Streamlit"
-                try:
-                    with open(full_path, 'r', encoding='utf-8') as f:
-                        lines = f.readlines()[:15]  # Lire les 15 premières lignes
-                        desc_lines = []
-                        for line in lines:
-                            if line.strip().startswith('#'):
-                                desc_lines.append(line.strip('# \n'))
-                            elif len(desc_lines) > 0:
-                                break  # Arrêt après les commentaires initiaux
-                        
-                        if desc_lines:
-                            description = ' '.join(desc_lines)
-                
-                except Exception:
-                    pass
-                
-                python_files.append(relative_path)
-                python_info[relative_path] = {
-                    'path': full_path,
-                    'name': os.path.splitext(file)[0].replace('_', ' ').title(),
-                    'description': description[:150] + '...' if len(description) > 150 else description
-                }
-    
-    return python_files, python_info
+if 'current_project' not in st.session_state:
+    st.session_state.current_project = None
 
-# ========== 6. Fonction pour importer dynamiquement et exécuter une application ==========
-def load_and_run_app(app_path):
-    # Ajouter le répertoire parent au chemin de recherche de modules
-    parent_dir = os.path.dirname(app_path)
-    if parent_dir not in sys.path:
-        sys.path.append(parent_dir)
-    
-    # Charger le module dynamiquement
-    module_name = os.path.basename(app_path).replace('.py', '')
-    spec = importlib.util.spec_from_file_location(module_name, app_path)
-    module = importlib.util.module_from_spec(spec)
-    
+if 'projects_data' not in st.session_state:
+    st.session_state.projects_data = None
+
+if 'loading_project' not in st.session_state:
+    st.session_state.loading_project = False
+
+# Fonction pour valider le mot de passe
+def validate_password(password):
+    # Dans un cas réel, utiliser un hachage plus sécurisé et une comparaison sécurisée contre le temps
+    # Pour cette démo, on utilise un simple mot de passe "admin123"
+    hashed_demo_pwd = hashlib.sha256("admin123".encode()).hexdigest()
+    hashed_input_pwd = hashlib.sha256(password.encode()).hexdigest()
+    return hashed_demo_pwd == hashed_input_pwd
+
+# Fonction pour récupérer les informations des projets
+def fetch_projects_data():
     try:
-        # Exécuter le module
-        spec.loader.exec_module(module)
+        # URL du fichier de configuration des projets dans le dépôt
+        url = "https://raw.githubusercontent.com/pierregabriel/Applications-PG/main/projects.json"
+        response = requests.get(url)
         
-        # Chercher les fonctions principales comme "main()" ou la logique Streamlit directe
-        if hasattr(module, 'main'):
-            module.main()
+        if response.status_code == 200:
+            return response.json()
         else:
-            # Si pas de fonction main(), le script est probablement structuré avec
-            # des appels directs à Streamlit, qui ont déjà été exécutés lors du chargement
-            pass
-        
-        return True
+            # Si le fichier n'existe pas encore, créer une liste de projets par défaut
+            # basée sur une analyse du dépôt
+            return [
+                {
+                    "name": "Analyseur de Sentiment",
+                    "description": "Application d'analyse de sentiment pour textes en français",
+                    "technologies": ["NLP", "Machine Learning", "Spacy"],
+                    "github_path": "sentiment_analysis",
+                    "main_file": "app.py",
+                    "icon": "💬"
+                },
+                {
+                    "name": "Dashboard COVID-19",
+                    "description": "Dashboard interactif de suivi des données COVID-19",
+                    "technologies": ["Data Viz", "Pandas", "Plotly"],
+                    "github_path": "covid_dashboard",
+                    "main_file": "app.py",
+                    "icon": "📊"
+                },
+                {
+                    "name": "Prédiction Immobilière",
+                    "description": "Modèle de prédiction de prix pour le marché immobilier",
+                    "technologies": ["Regression", "Sklearn", "Pandas"],
+                    "github_path": "real_estate",
+                    "main_file": "app.py",
+                    "icon": "🏠"
+                }
+            ]
     except Exception as e:
-        st.error(f"Erreur lors de l'exécution de l'application: {str(e)}")
-        st.code(str(e), language="python")
-        return False
+        st.error(f"Erreur lors de la récupération des projets: {e}")
+        return []
 
-# ========== 7. Protection par mot de passe ==========
-def password_protect():
-    st.title("🔒 Accès sécurisé")
+# Fonction pour charger et exécuter le code du projet sélectionné
+def load_project(project_name):
+    st.session_state.loading_project = True
+    st.session_state.current_project = project_name
     
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-        
-    if st.session_state.authenticated:
-        return True
-        
-    password = st.text_input("Entrez le mot de passe :", type="password")
-    
-    if password == CORRECT_PASSWORD:
-        st.success("🔓 Accès autorisé !")
-        st.session_state.authenticated = True
-        return True
-    elif password:
-        st.error("❌ Mot de passe incorrect")
-        
-    return False
+    # Dans une application réelle, on chargerait dynamiquement le code du projet
+    # Pour cette démo, nous simulons le chargement
+    time.sleep(1)
+    st.session_state.loading_project = False
 
-# ========== 8. Fonction pour isoler et afficher le code d'une application ==========
-def display_app_code(app_path):
-    with open(app_path, 'r', encoding='utf-8') as f:
-        code = f.read()
+# Fonction pour afficher un projet
+def display_project(project):
+    col1, col2 = st.columns([3, 1])
     
-    with st.expander("Voir le code source"):
-        st.code(code, language="python")
-
-# ========== 9. Fonction pour afficher une application dans un conteneur isolé ==========
-def display_app_content(app_path, app_name):
-    st.markdown(f"""
-    <div class="app-header">
-        {app_name}
-    </div>
-    """, unsafe_allow_html=True)
+    with col1:
+        st.markdown(f"<h3>{project['icon']} {project['name']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p>{project['description']}</p>", unsafe_allow_html=True)
+        
+        # Badges de technologies
+        tech_badges = " ".join([f"<span class='tech-badge'>{tech}</span>" for tech in project['technologies']])
+        st.markdown(f"<div>{tech_badges}</div>", unsafe_allow_html=True)
     
-    with st.container():
-        st.markdown('<div class="app-body">', unsafe_allow_html=True)
-        
-        # Sauvegarder l'état actuel des widgets Streamlit
-        old_widgets = st.session_state.to_dict()
-        
-        # Créer un préfixe unique pour cet app pour éviter les conflits de clés
-        app_key_prefix = f"app_{hash(app_path)}_"
-        
-        # Rediriger temporairement la sortie standard pour éviter les conflits
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        
-        try:
-            # Modifier sys.argv pour simuler l'exécution de l'application
-            old_argv = sys.argv.copy()
-            sys.argv = [app_path]
-            
-            # Essayer d'exécuter l'application
-            load_and_run_app(app_path)
-            
-            # Restaurer sys.argv
-            sys.argv = old_argv
-            
-        except Exception as e:
-            st.error(f"Impossible d'intégrer cette application. Erreur: {str(e)}")
-        
-        finally:
-            # Restaurer la sortie standard
-            sys.stdout.close()
-            sys.stdout = old_stdout
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== 10. Affichage des applications ==========
-def display_apps(python_info):
-    # Initialiser la sélection si elle n'existe pas
-    if 'selected_app' not in st.session_state:
-        st.session_state.selected_app = None
-    
-    # Afficher la liste des applications
-    for rel_path, info in python_info.items():
-        with st.container():
-            st.markdown(f"""
-            <div class="app-card">
-                <div class="card-title">{info['name']}</div>
-                <p class="card-description">{info['description']}</p>
+    with col2:
+        st.markdown(
+            f"""
+            <div style="display: flex; justify-content: flex-end; align-items: center; height: 100%;">
+                <button class="custom-button" onclick="document.getElementById('btn_{re.sub(r'[^a-zA-Z0-9]', '', project['name'])}').click()">
+                    Lancer le projet
+                </button>
             </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns([1, 1, 1])
-            
-            with col1:
-                if st.button(f"📱 Afficher l'application", key=f"show_{rel_path}"):
-                    st.session_state.selected_app = info['path']
-                    # Forcer un rechargement de la page
-                    st.experimental_rerun()
-            
-            with col2:
-                if st.button(f"🔍 Voir le code", key=f"code_{rel_path}"):
-                    with st.expander(f"Code source de {info['name']}", expanded=True):
-                        with open(info['path'], 'r', encoding='utf-8') as f:
-                            code = f.read()
-                        st.code(code, language="python")
-            
-            # Option pour exécuter le code avec exec (pour des scripts simples)
-            with col3:
-                if st.button(f"🚀 Exécuter directement", key=f"exec_{rel_path}"):
-                    try:
-                        # Créer un iframe ou un conteneur pour isoler l'app
-                        st.markdown('<div class="embedded-app">', unsafe_allow_html=True)
-                        st.subheader(f"Application: {info['name']}")
-                        
-                        # Méthode 1: Importer et exécuter dynamiquement
-                        load_and_run_app(info['path'])
-                        
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error(f"Erreur lors de l'exécution: {str(e)}")
-            
-            st.markdown("---")
-    
-    # Afficher l'application sélectionnée si elle existe
-    if st.session_state.selected_app:
-        app_path = st.session_state.selected_app
+            """, 
+            unsafe_allow_html=True
+        )
         
-        # Trouver les infos de l'app
-        app_name = "Application"
-        for info in python_info.values():
-            if info['path'] == app_path:
-                app_name = info['name']
-                break
-        
-        st.markdown('<div class="app-container">', unsafe_allow_html=True)
-        
-        # En-tête de l'application
-        col1, col2 = st.columns([5, 1])
-        col1.header(f"📱 {app_name}")
-        if col2.button("❌ Fermer"):
-            st.session_state.selected_app = None
-            st.experimental_rerun()
-        
-        # Contenu de l'application
-        try:
-            # Importer et exécuter l'application
-            st.markdown('<div class="embedded-app">', unsafe_allow_html=True)
-            
-            # Méthode pour intégrer l'app
-            with st.spinner("Chargement de l'application..."):
-                display_app_content(app_path, app_name)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Code source
-            display_app_code(app_path)
-            
-        except Exception as e:
-            st.error(f"Impossible d'afficher cette application. Erreur: {str(e)}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Bouton invisible qui sera cliqué par le JavaScript
+        if st.button("Lancer", key=f"btn_{re.sub(r'[^a-zA-Z0-9]', '', project['name'])}", help=f"Lancer {project['name']}", type="primary"):
+            load_project(project['name'])
 
-# ========== 11. Sidebar ==========
-def display_sidebar():
-    st.sidebar.title("Menu")
+# Page de connexion
+def login_page():
+    load_css()
     
-    # Actions de synchronisation du dépôt
-    if st.sidebar.button("🔄 Synchroniser les applications"):
-        sync_repo(REPO_URL, REPO_PATH)
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    # Afficher la dernière synchronisation
-    if os.path.exists(REPO_PATH):
-        try:
-            last_commit = subprocess.check_output(
-                ["git", "-C", REPO_PATH, "log", "-1", "--format=%cd"], 
-                stderr=subprocess.DEVNULL
-            ).decode("utf-8").strip()
-            st.sidebar.info(f"Dernière mise à jour: {last_commit}")
-        except:
-            pass
+    with col2:
+        st.markdown("<div class='fade-in'>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; margin-top: 80px;'>Portfolio de Projets</h1>", unsafe_allow_html=True)
+        st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
+        
+        st.markdown("<h3 style='text-align: center;'>Connexion</h3>", unsafe_allow_html=True)
+        
+        password = st.text_input("Mot de passe", type="password", help="Mot de passe pour accéder au portfolio")
+        
+        if st.button("Se connecter", type="primary"):
+            if validate_password(password):
+                st.session_state.authenticated = True
+                st.session_state.projects_data = fetch_projects_data()
+                st.experimental_rerun()
+            else:
+                st.markdown("<div class='error-message'>Mot de passe incorrect. Veuillez réessayer.</div>", unsafe_allow_html=True)
+        
+        st.markdown("<div style='text-align: center; margin-top: 30px;'>Pour cette démo, utilisez le mot de passe: <strong>admin123</strong></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# Page principale
+def main_page():
+    load_css()
     
-    # Option avancée: effacer toutes les sélections
-    if st.session_state.get('selected_app'):
-        if st.sidebar.button("🧹 Réinitialiser la vue"):
-            st.session_state.selected_app = None
-            st.experimental_rerun()
+    # Header
+    st.markdown(
+        """
+        <div class="header fade-in">
+            <h1>Portfolio de Projets</h1>
+            <button class="custom-button" onclick="document.getElementById('btn_logout').click()">Déconnexion</button>
+        </div>
+        <div class="separator"></div>
+        """, 
+        unsafe_allow_html=True
+    )
     
-    st.sidebar.markdown("---")
-    
-    # Informations de contact
-    st.sidebar.subheader("Contact")
-    st.sidebar.markdown("📧 email@example.com")
-    st.sidebar.markdown("🔗 [LinkedIn](https://linkedin.com)")
-    st.sidebar.markdown("🔗 [GitHub](https://github.com)")
-    
-    # Déconnexion
-    if st.sidebar.button("🔑 Déconnexion"):
-        st.session_state.clear()
+    # Bouton de déconnexion invisible
+    if st.button("Déconnexion", key="btn_logout", help="Se déconnecter de l'application"):
+        st.session_state.authenticated = False
+        st.session_state.current_project = None
         st.experimental_rerun()
-
-# ========== 12. Main ==========
-def main():
-    apply_styles()
     
-    # Vérifier l'authentification
-    if not password_protect():
-        return
+    # Si on charge un projet
+    if st.session_state.current_project:
+        # Bouton pour revenir à la liste des projets
+        if st.button("← Retour aux projets", help="Revenir à la liste des projets"):
+            st.session_state.current_project = None
+            st.experimental_rerun()
+        
+        st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
+        
+        # Affichage du projet
+        project = next((p for p in st.session_state.projects_data if p["name"] == st.session_state.current_project), None)
+        
+        if project:
+            st.markdown(f"<h2 class='fade-in'>{project['icon']} {project['name']}</h2>", unsafe_allow_html=True)
+            
+            if st.session_state.loading_project:
+                st.markdown("<div style='text-align: center; margin: 50px 0;'>", unsafe_allow_html=True)
+                st.spinner(f"Chargement de {project['name']}...")
+                st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div class='project-demo fade-in'>", unsafe_allow_html=True)
+                st.info(f"Démonstration de {project['name']}")
+                st.write(f"Dans une application réelle, le code du projet {project['name']} serait chargé et exécuté ici.")
+                st.write("Pour implémenter cela, vous pourriez:")
+                st.write("1. Charger dynamiquement le code Python depuis GitHub")
+                st.write("2. L'exécuter dans un contexte isolé")
+                st.write("3. L'intégrer dans l'interface via un composant st.container()")
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
+                
+                # Détails du projet
+                st.markdown("<h3>Détails techniques</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p><strong>Description:</strong> {project['description']}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p><strong>Chemin GitHub:</strong> {project['github_path']}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p><strong>Fichier principal:</strong> {project['main_file']}</p>", unsafe_allow_html=True)
+                
+                st.markdown("<h3>Technologies utilisées</h3>", unsafe_allow_html=True)
+                tech_badges = " ".join([f"<span class='tech-badge'>{tech}</span>" for tech in project['technologies']])
+                st.markdown(f"<div>{tech_badges}</div>", unsafe_allow_html=True)
     
-    # Afficher la barre latérale
-    display_sidebar()
-    
-    # Afficher le contenu principal
-    st.markdown('<h1 class="main-header">🚀 Mon Portfolio d\'Applications</h1>', unsafe_allow_html=True)
-    
-    # Introduction
-    st.markdown("""
-    Bienvenue sur mon portfolio d'applications Streamlit ! Vous trouverez ci-dessous
-    mes différentes applications et projets. Cliquez sur "Afficher l'application" pour 
-    voir l'application directement dans cette page, ou sur "Exécuter directement" pour 
-    un aperçu rapide.
-    """)
-    
-    # Cloner/synchroniser le dépôt si nécessaire
-    if not os.path.exists(REPO_PATH):
-        sync_repo(REPO_URL, REPO_PATH)
-    
-    # Lister les fichiers
-    python_files, python_info = list_python_files(REPO_PATH)
-    
-    # Afficher les applications
-    if not python_files:
-        st.warning("⚠️ Aucune application trouvée dans le dépôt.")
+    # Sinon, afficher la liste des projets
     else:
-        display_apps(python_info)
+        st.markdown("<h2 class='fade-in'>Projets disponibles</h2>", unsafe_allow_html=True)
+        
+        # Affichage des projets sous forme de cartes
+        for i, project in enumerate(st.session_state.projects_data):
+            with st.container():
+                st.markdown(f"<div class='project-card fade-in' style='animation-delay: {i * 0.1}s;'>", unsafe_allow_html=True)
+                display_project(project)
+                st.markdown("</div>", unsafe_allow_html=True)
     
-    # Pied de page
-    st.markdown('<div class="footer">© 2024 - Mon Portfolio d\'Applications</div>', unsafe_allow_html=True)
+    # Footer
+    st.markdown(
+        """
+        <div class="separator"></div>
+        <div class="footer fade-in">
+            <p>Portfolio de Projets © 2025 | Développé avec Streamlit</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
+# Point d'entrée principal de l'application
+def run():
+    # Vérifier si l'utilisateur est authentifié
+    if st.session_state.authenticated:
+        main_page()
+    else:
+        login_page()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        st.error(f"Erreur globale: {str(e)}")
+    run()
