@@ -182,7 +182,7 @@ def password_protect():
         st.markdown('<div class="success-message">🔓 Accès autorisé !</div>', unsafe_allow_html=True)
         st.session_state.authenticated = True
         st.session_state.password_entered = True
-        st.experimental_rerun()
+        st.rerun()
     elif password:
         st.markdown('<div class="error-message">❌ Mot de passe incorrect</div>', unsafe_allow_html=True)
     
