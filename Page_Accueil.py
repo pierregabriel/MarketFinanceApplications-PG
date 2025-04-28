@@ -1,77 +1,75 @@
+# Page_Accueil.py
+
 import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+import os
+import subprocess
+import importlib.util
+import sys
 
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Portfolio Finance de Marché", page_icon="📈", layout="wide")
+# ========== 1. Paramètres ==========
+# Définir ton mot de passe ici
+CORRECT_PASSWORD = "monmotdepasse2024"
 
-# --- MOT DE PASSE ---
-PASSWORD = "monmotdepasse"  # <<< A personnaliser
+# URL de ton dépôt GitHub
+REPO_URL = "https://github.com/pierregabriel/Applications-PG.git"
+REPO_PATH = "Applications-PG"
 
-def check_password():
-    """Vérifie le mot de passe utilisateur"""
-    def password_entered():
-        if st.session_state["password"] == PASSWORD:
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # Nettoyer après validation
-        else:
-            st.session_state["password_correct"] = False
+# ========== 2. Fonction pour cloner le repo ==========
+def clone_repo(repo_url, repo_path):
+    if not os.path.exists(repo_path):
+        subprocess.run(["git", "clone", repo_url, repo_path])
 
-    if "password_correct" not in st.session_state:
-        st.text_input("🔒 Entrez le mot de passe :", type="password", on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("🔒 Entrez le mot de passe :", type="password", on_change=password_entered, key="password")
-        st.error("Mot de passe incorrect.")
-        return False
-    else:
+# ========== 3. Fonction pour lister les fichiers Python ==========
+def list_python_files(folder_path):
+    python_files = []
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith(".py") and file != os.path.basename(__file__):
+                full_path = os.path.join(root, file)
+                python_files.append(full_path)
+    return python_files
+
+# ========== 4. Fonction pour exécuter un fichier Python dynamiquement ==========
+def run_python_file(file_path):
+    spec = importlib.util.spec_from_file_location("selected_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["selected_module"] = module
+    spec.loader.exec_module(module)
+
+# ========== 5. Sécurité : demande de mot de passe ==========
+def password_protect():
+    st.title("🔒 Page sécurisée")
+    password = st.text_input("Entrez le mot de passe :", type="password")
+    if password == CORRECT_PASSWORD:
+        st.success("🔓 Accès autorisé !")
         return True
+    elif password:
+        st.error("❌ Mot de passe incorrect.")
+    return False
 
-# --- AFFICHER LE CONTENU D'UN FICHIER PYTHON ---
-def afficher_code(url_brut):
-    try:
-        response = requests.get(url_brut)
-        response.raise_for_status()
-        code = response.text
-        st.code(code, language="python")
-    except Exception as e:
-        st.error(f"Erreur lors du chargement du fichier : {e}")
+# ========== 6. Lancement principal ==========
+def main():
+    access_granted = password_protect()
 
-# --- LISTE DES FICHIERS PYTHON DANS LE DEPOT ---
-def lister_fichiers_py(github_username, repo_name):
-    """Retourne la liste des .py du dépôt principal (niveau 1)"""
-    github_url = f"https://github.com/{github_username}/{repo_name}/tree/main"
-    try:
-        page = requests.get(github_url)
-        soup = BeautifulSoup(page.text, 'html.parser')
-        fichiers = []
-        for link in soup.find_all('a'):
-            href = link.get('href')
-            if href and href.endswith('.py') and f"/{repo_name}/blob/main/" in href:
-                fichier = href.split("/")[-1]
-                fichiers.append(fichier)
-        return fichiers
-    except Exception as e:
-        st.error(f"Erreur lors de la récupération des fichiers : {e}")
-        return []
+    if access_granted:
+        st.title("📚 Bienvenue sur mon Application Streamlit")
+        st.write("Explorez les projets disponibles dans mon dépôt GitHub.")
 
-# --- MAIN ---
-if check_password():
-    st.title("📈 Portfolio - Projets de Finance de Marché")
-    st.subheader("Bienvenue sur mon espace de présentation de projets.")
-    st.write("Retrouvez ici l'ensemble de mes travaux sur les options, la couverture, et les risques financiers.")
+        # Cloner ou mettre à jour le repo
+        clone_repo(REPO_URL, REPO_PATH)
 
-    # --- Ton dépôt GitHub ---
-    github_username = "pierregabriel"  # <<<<<<< à personnaliser
-    repo_name = "Applications-PG.git"             # <<<<<<< à personnaliser
+        # Lister les fichiers .py
+        python_files = list_python_files(REPO_PATH)
 
-    # --- Récupération des fichiers
-    fichiers = lister_fichiers_py(github_username, repo_name)
+        if not python_files:
+            st.warning("⚠️ Aucun fichier Python trouvé dans le dépôt.")
+        else:
+            selected_file = st.selectbox("📄 Choisissez un fichier à exécuter :", python_files)
 
-    if fichiers:
-        choix = st.selectbox("🗂️ Sélectionnez un projet :", fichiers)
-        if choix:
-            url_brut = f"https://raw.githubusercontent.com/{github_username}/{repo_name}/main/{choix}"
-            afficher_code(url_brut)
-    else:
-        st.warning("Aucun fichier Python trouvé dans le dépôt.")
+            st.code(open(selected_file, "r", encoding="utf-8").read(), language='python')
+
+            if st.button("▶️ Lancer le fichier sélectionné"):
+                run_python_file(selected_file)
+
+if __name__ == "__main__":
+    main()
