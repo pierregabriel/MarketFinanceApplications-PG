@@ -1,12 +1,6 @@
 import streamlit as st
 from datetime import datetime
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Projets Finance de Marché - Pierre-Gabriel BILLAULT",
-    page_icon="📊",
-)
-
 # En-tête
 st.title("Portfolio de Projets en Finance de Marché")
 st.subheader("Pierre-Gabriel BILLAULT")
