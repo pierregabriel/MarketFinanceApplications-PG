@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import date, timedelta
 
+
 # Custom CSS for better styling
 st.markdown("""
 <style>
