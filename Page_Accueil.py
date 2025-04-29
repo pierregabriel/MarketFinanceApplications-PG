@@ -33,11 +33,11 @@ st.markdown("""
 
 # Sections disponibles
 sections = {
-    "🏠 Accueil": "Page_Accueil",
-    "💱 Marché FX": "pages/FX/FX",
-    "📊 Grecques Options": "pages/options/Grecs",
-    "💹 Pricing Options": "pages/options/Pricing_options",
-    "🔄 Stratégies Options": "pages/options/Stratégie_options"
+    "🏠 Accueil": "",
+    "💱 Marché FX": "FX/FX",
+    "📊 Grecques Options": "options/Grecs",
+    "💹 Pricing Options": "options/Pricing_options",
+    "🔄 Stratégies Options": "options/Stratégie_options"
 }
 
 # Création des boutons de navigation
@@ -45,7 +45,11 @@ cols = st.columns(5)
 for i, (name, path) in enumerate(sections.items()):
     with cols[i]:
         if st.button(name, key=f"nav_{i}"):
-            st.switch_page(f"{path}.py")
+            if path:  # Si ce n'est pas la page d'accueil
+                st.switch_page(f"pages/{path}.py")
+            else:
+                # Rafraîchir la page actuelle (Accueil)
+                st.rerun()
 
 # Contenu de la page d'accueil
 st.header("Bienvenue sur la plateforme de trading")
