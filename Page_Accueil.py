@@ -9,16 +9,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Fonction pour créer un lien cliquable vers les autres pages
-def create_page_link(page_name, emoji, description, folder):
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown(f"<h1 style='text-align: center;'>{emoji}</h1>", unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"### [{page_name}](/{folder}/{page_name.lower().replace(' ', '_')})")
-        st.markdown(f"<p style='margin-top: -10px;'>{description}</p>", unsafe_allow_html=True)
-    st.markdown("---")
-
 # CSS personnalisé
 st.markdown("""
 <style>
@@ -42,6 +32,17 @@ st.markdown("""
         margin-bottom: 20px;
         background-color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .project-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #1E88E5;
+    }
+    .emoji-icon {
+        font-size: 2rem;
+        margin-right: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -78,23 +79,125 @@ with col3:
 
 st.markdown("---")
 
-# Projets
+# Projets avec navigation par onglets
 st.header("Mes Projets")
 
-# Section FX
-st.subheader("Projets FX")
-with st.container():
+# Création des onglets principaux
+fx_options_tab = st.tabs(["Projets FX", "Projets Options"])
+
+# Contenu de l'onglet FX
+with fx_options_tab[0]:
     st.markdown('<div class="project-container">', unsafe_allow_html=True)
-    create_page_link("Analyse Forex", "💱", "Analyse technique et fondamentale des paires de devises majeures.", "pages/FX")
-    create_page_link("Trading Algorithmique", "🤖", "Stratégies automatisées pour le marché des changes.", "pages/FX")
+    
+    # Sous-onglets pour les projets FX
+    fx_tabs = st.tabs(["Analyse Forex", "Trading Algorithmique"])
+    
+    # Contenu de l'onglet Analyse Forex
+    with fx_tabs[0]:
+        st.markdown('<div class="project-card">', unsafe_allow_html=True)
+        st.markdown('<span class="emoji-icon">💱</span> **Analyse technique et fondamentale des paires de devises majeures**', unsafe_allow_html=True)
+        
+        # Contenu de l'analyse Forex
+        st.write("""
+        ## Analyse des paires de devises majeures
+        
+        Cette section présente mon approche d'analyse des marchés Forex, combinant analyse technique et fondamentale.
+        
+        ### Méthodologie
+        - Identification des niveaux de support et résistance
+        - Analyse des indicateurs techniques (RSI, MACD, etc.)
+        - Suivi des événements macroéconomiques
+        - Évaluation des politiques monétaires
+        
+        ### Paires analysées
+        - EUR/USD
+        - GBP/USD
+        - USD/JPY
+        - AUD/USD
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Contenu de l'onglet Trading Algorithmique
+    with fx_tabs[1]:
+        st.markdown('<div class="project-card">', unsafe_allow_html=True)
+        st.markdown('<span class="emoji-icon">🤖</span> **Stratégies automatisées pour le marché des changes**', unsafe_allow_html=True)
+        
+        # Contenu du trading algorithmique
+        st.write("""
+        ## Trading Algorithmique FX
+        
+        Présentation de mes stratégies automatisées pour le marché des changes.
+        
+        ### Types de stratégies
+        - Stratégies de suivi de tendance
+        - Trading de retour à la moyenne
+        - Stratégies basées sur les divergences
+        - Arbitrage de devises
+        
+        ### Performance
+        - Backtest sur 5 ans de données historiques
+        - Métriques de performance (Sharpe ratio, drawdown, etc.)
+        - Comparaison avec des benchmarks
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Section Options
-st.subheader("Projets Options")
-with st.container():
+# Contenu de l'onglet Options
+with fx_options_tab[1]:
     st.markdown('<div class="project-container">', unsafe_allow_html=True)
-    create_page_link("Pricing d'Options", "💰", "Modèles de pricing pour différents types d'options.", "pages/options")
-    create_page_link("Stratégies d'Options", "📈", "Analyse et backtest de stratégies d'options complexes.", "pages/options")
+    
+    # Sous-onglets pour les projets Options
+    options_tabs = st.tabs(["Pricing d'Options", "Stratégies d'Options"])
+    
+    # Contenu de l'onglet Pricing d'Options
+    with options_tabs[0]:
+        st.markdown('<div class="project-card">', unsafe_allow_html=True)
+        st.markdown('<span class="emoji-icon">💰</span> **Modèles de pricing pour différents types d\'options**', unsafe_allow_html=True)
+        
+        # Contenu du pricing d'options
+        st.write("""
+        ## Modèles de Pricing d'Options
+        
+        Cette section présente mes travaux sur les modèles de valorisation d'options.
+        
+        ### Modèles implémentés
+        - Black-Scholes-Merton
+        - Modèle binomial (Cox-Ross-Rubinstein)
+        - Monte Carlo pour options exotiques
+        - Modèles à volatilité stochastique
+        
+        ### Applications
+        - Pricing d'options vanilles
+        - Valorisation d'options exotiques
+        - Calibration de volatilité implicite
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Contenu de l'onglet Stratégies d'Options
+    with options_tabs[1]:
+        st.markdown('<div class="project-card">', unsafe_allow_html=True)
+        st.markdown('<span class="emoji-icon">📈</span> **Analyse et backtest de stratégies d\'options complexes**', unsafe_allow_html=True)
+        
+        # Contenu des stratégies d'options
+        st.write("""
+        ## Stratégies d'Options
+        
+        Présentation et analyse de diverses stratégies d'options.
+        
+        ### Stratégies étudiées
+        - Spreads verticaux (Bull/Bear)
+        - Iron Condor / Iron Butterfly
+        - Calendar spreads
+        - Ratio spreads et diagonaux
+        
+        ### Analyse de performance
+        - Backtest des stratégies
+        - Analyse de scénarios (stress tests)
+        - Optimisation des paramètres
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Pied de page
