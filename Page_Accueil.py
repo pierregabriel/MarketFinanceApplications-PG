@@ -1,33 +1,32 @@
 import streamlit as st
 
-# Définition des pages
-accueil_page = st.Page("Page_Accueil.py", title="Accueil", icon="🏠")
+# Configuration de la page avec largeur étendue doit être la première commande Streamlit
+st.set_page_config(layout="wide")
 
-fx_page = st.Page(
-    "pages/FX/FX.py",
+# Définition des pages
+accueil_page = st.page(path="Page_Accueil.py", title="Accueil", icon="🏠")
+fx_page = st.page(
+    path="pages/FX/FX.py",
     title="Marché FX",
     icon="💱"
 )
-
-grecs_page = st.Page(
-    "pages/options/Grecs.py",
+grecs_page = st.page(
+    path="pages/options/Grecs.py",
     title="Grecques Options",
     icon="📊"
 )
-
-pricing_page = st.Page(
-    "pages/options/Pricing_options.py",
+pricing_page = st.page(
+    path="pages/options/Pricing_options.py",
     title="Pricing Options",
     icon="💹"
 )
-
-strategie_page = st.Page(
-    "pages/options/Stratégie_options.py",
+strategie_page = st.page(
+    path="pages/options/Stratégie_options.py",
     title="Stratégies Options",
     icon="🔄"
 )
 
-# Construction de la navigation sans connexion
+# Construction de la navigation
 page_dict = {
     "Accueil": [accueil_page],
     "FX": [fx_page],
@@ -37,14 +36,11 @@ page_dict = {
 # Affichage de la navigation
 pg = st.navigation(page_dict)
 
-# Utilisation de la configuration pour élargir l'affichage
-st.set_page_config(layout="wide")
-
 # Contenu de la page d'accueil
-if pg.get_title() == "Accueil":
+if st.get_current_page_title() == "Accueil":  # Utilisation de get_current_page_title() au lieu de pg.get_title()
     # Éléments communs pour la page d'accueil uniquement
     st.title("Plateforme de Trading")
-    # st.logo("chemin/vers/logo.png")  # Décommentez si vous avez un logo
+    # st.image("chemin/vers/logo.png")  # Pour afficher un logo (remarquez qu'on utilise image, pas logo)
     
     st.header("Bienvenue sur la Plateforme de Trading")
     st.write("""
@@ -78,6 +74,6 @@ if pg.get_title() == "Accueil":
     }
     st.line_chart(chart_data, x="Date")
 
-# Pour les autres pages, on laisse leur propre contenu s'afficher
-# Exécution de la page
-pg.run()
+# Exécution de la page active
+if hasattr(pg, 'run'):
+    pg.run()
