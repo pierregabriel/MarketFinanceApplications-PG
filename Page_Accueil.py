@@ -271,118 +271,41 @@ if st.session_state.current_page == 'home':
 elif st.session_state.current_page == 'grecs':
     st.header("📊 Visualisation des Grecs des Options")
     
-    # Ici, vous pouvez soit intégrer directement le code de Grecs.py,
-    # soit charger le module avec la fonction load_python_module
-    
-    st.write("""
-    ## Visualisation interactive des Grecs d'options
-    
-    Cette application permet d'explorer visuellement comment les grecs d'options (Delta, Gamma, Theta, Vega, Rho)
-    évoluent en fonction de différents paramètres.
-    """)
-    
-    # Simulation du contenu de Grecs.py
-    st.sidebar.header("Paramètres")
-    
-    option_type = st.sidebar.selectbox("Type d'option", ["Call", "Put"])
-    s0 = st.sidebar.slider("Prix du sous-jacent", 50, 150, 100)
-    k = st.sidebar.slider("Prix d'exercice", 50, 150, 100)
-    r = st.sidebar.slider("Taux sans risque (%)", 0.0, 10.0, 2.0) / 100
-    sigma = st.sidebar.slider("Volatilité (%)", 5.0, 100.0, 20.0) / 100
-    t = st.sidebar.slider("Temps jusqu'à expiration (jours)", 1, 365, 30) / 365
-    
-    greek_choice = st.selectbox("Sélectionnez un grec à visualiser", ["Delta", "Gamma", "Theta", "Vega", "Rho"])
-    
-    st.write(f"Visualisation de {greek_choice} pour une option {option_type.lower()} avec les paramètres suivants:")
-    st.write(f"- Prix du sous-jacent: {s0}")
-    st.write(f"- Prix d'exercice: {k}")
-    st.write(f"- Taux sans risque: {r*100:.2f}%")
-    st.write(f"- Volatilité: {sigma*100:.2f}%")
-    st.write(f"- Temps jusqu'à expiration: {t*365:.0f} jours")
-    
-    # Placeholder pour le graphique (normalement généré par le code réel)
-    st.line_chart({"x": list(range(10)), "y": [i*i for i in range(10)]})
-    
-    st.write(f"**Valeur actuelle de {greek_choice}:** 0.456")
+    # Chargement du module externe
+    module_path = os.path.join("pages", "options", "Grecs.py")
+    if os.path.exists(module_path):
+        success = load_python_module(module_path)
+        if not success:
+            st.error("Impossible de charger le module Grecs.py")
+    else:
+        st.error(f"Le fichier {module_path} n'existe pas.")
+        st.info("Assurez-vous que le fichier Grecs.py est présent dans le dossier pages/options.")
 
 elif st.session_state.current_page == 'pricing':
     st.header("💰 Pricing d'Options")
     
-    # Simulation du contenu de Pricing_options.py
-    st.write("""
-    ## Modèles de pricing d'options
-    
-    Cette application permet de calculer le prix d'options en utilisant différents modèles mathématiques.
-    """)
-    
-    model = st.selectbox("Modèle de pricing", ["Black-Scholes", "Binomial", "Monte Carlo"])
-    
-    st.sidebar.header("Paramètres")
-    option_type = st.sidebar.selectbox("Type d'option", ["Call", "Put", "Option exotique"])
-    if option_type == "Option exotique":
-        exotic_type = st.sidebar.selectbox("Type d'option exotique", ["Asiatique", "Barrière", "Lookback"])
-    
-    s0 = st.sidebar.slider("Prix du sous-jacent", 50, 150, 100)
-    k = st.sidebar.slider("Prix d'exercice", 50, 150, 100)
-    r = st.sidebar.slider("Taux sans risque (%)", 0.0, 10.0, 2.0) / 100
-    sigma = st.sidebar.slider("Volatilité (%)", 5.0, 100.0, 20.0) / 100
-    t = st.sidebar.slider("Temps jusqu'à expiration (jours)", 1, 365, 30) / 365
-    
-    # Affichage du prix calculé
-    if model == "Black-Scholes":
-        price = 12.34  # Placeholder pour le prix calculé
-    elif model == "Binomial":
-        steps = st.sidebar.slider("Nombre d'étapes", 10, 1000, 50)
-        price = 12.45  # Placeholder pour le prix calculé
-    else:  # Monte Carlo
-        sims = st.sidebar.slider("Nombre de simulations", 1000, 100000, 10000)
-        price = 12.56  # Placeholder pour le prix calculé
-    
-    st.markdown(f"### Prix calculé: **${price:.2f}**")
-    
-    # Graphique montrant la convergence du prix (pour Monte Carlo) ou la distribution des prix
-    st.subheader("Analyse du modèle")
-    st.line_chart({"x": list(range(10)), "y": [12.34 + i*0.02 for i in range(10)]})
+    # Chargement du module externe
+    module_path = os.path.join("pages", "options", "Pricing_options.py")
+    if os.path.exists(module_path):
+        success = load_python_module(module_path)
+        if not success:
+            st.error("Impossible de charger le module Pricing_options.py")
+    else:
+        st.error(f"Le fichier {module_path} n'existe pas.")
+        st.info("Assurez-vous que le fichier Pricing_options.py est présent dans le dossier pages/options.")
 
 elif st.session_state.current_page == 'strategies':
     st.header("📈 Stratégies d'Options")
     
-    # Simulation du contenu de Stratégie_options.py
-    st.write("""
-    ## Analyse de stratégies d'options
-    
-    Cette application permet de créer et d'analyser différentes stratégies d'options complexes.
-    """)
-    
-    strategy = st.selectbox("Stratégie", ["Bull Call Spread", "Bear Put Spread", "Iron Condor", "Butterfly", "Straddle", "Strangle"])
-    
-    st.sidebar.header("Paramètres du marché")
-    s0 = st.sidebar.slider("Prix du sous-jacent", 50, 150, 100)
-    r = st.sidebar.slider("Taux sans risque (%)", 0.0, 10.0, 2.0) / 100
-    sigma = st.sidebar.slider("Volatilité (%)", 5.0, 100.0, 20.0) / 100
-    days_to_expiry = st.sidebar.slider("Jours jusqu'à expiration", 1, 365, 30)
-    
-    # Paramètres spécifiques à la stratégie
-    if strategy == "Bull Call Spread":
-        k1 = st.sidebar.slider("Prix d'exercice Call 1", 80, 120, 95)
-        k2 = st.sidebar.slider("Prix d'exercice Call 2", 80, 120, 105)
-    elif strategy == "Bear Put Spread":
-        k1 = st.sidebar.slider("Prix d'exercice Put 1", 80, 120, 95)
-        k2 = st.sidebar.slider("Prix d'exercice Put 2", 80, 120, 105)
-    # etc. pour les autres stratégies
-    
-    # Affichage du profil de profit/perte
-    st.subheader("Profil de profit/perte")
-    st.area_chart({"x": list(range(70, 131)), "y": [(x-100)*0.5 if x > 105 else (105-100)*0.5 if x > 95 else (x-95)*0.5-5 for x in range(70, 131)]})
-    
-    # Métriques de la stratégie
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Profit max", "$5.00")
-    with col2:
-        st.metric("Perte max", "$5.00")
-    with col3:
-        st.metric("Point d'équilibre", "$95.00 / $105.00")
+    # Chargement du module externe
+    module_path = os.path.join("pages", "options", "Stratégie_options.py")
+    if os.path.exists(module_path):
+        success = load_python_module(module_path)
+        if not success:
+            st.error("Impossible de charger le module Stratégie_options.py")
+    else:
+        st.error(f"Le fichier {module_path} n'existe pas.")
+        st.info("Assurez-vous que le fichier Stratégie_options.py est présent dans le dossier pages/options.")
 
 # Pied de page
 st.markdown("---")
