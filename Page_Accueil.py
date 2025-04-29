@@ -1,45 +1,18 @@
-# Page_Accueil.py
 import streamlit as st
 
-# Initialisation du rôle
-if "role" not in st.session_state:
-    st.session_state.role = None
-
-# Rôles disponibles
-ROLES = [None, "Trader FX", "Trader Options", "Admin"]
-
-# Page de connexion
-def login():
-    st.header("Connexion")
-    role = st.selectbox("Sélectionnez votre rôle", ROLES)
-    if st.button("Se connecter"):
-        st.session_state.role = role
-        st.rerun()
-
-# Page de déconnexion
-def logout():
-    st.session_state.role = None
-    st.rerun()
-
-# Rôle actuel
-role = st.session_state.role
-
 # Définition des pages
-logout_page = st.Page(logout, title="Déconnexion", icon="🚪")
 accueil_page = st.Page("Page_Accueil.py", title="Accueil", icon="🏠")
 
 fx_page = st.Page(
     "pages/FX/FX.py",
     title="Marché FX",
-    icon="💱",
-    default=(role == "Trader FX")
+    icon="💱"
 )
 
 grecs_page = st.Page(
     "pages/options/Grecs.py",
     title="Grecques Options",
-    icon="📊",
-    default=(role == "Trader Options")
+    icon="📊"
 )
 
 pricing_page = st.Page(
@@ -54,29 +27,41 @@ strategie_page = st.Page(
     icon="🔄"
 )
 
-# Groupement des pages
-account_pages = [logout_page, accueil_page]
-fx_pages = [fx_page]
-options_pages = [grecs_page, pricing_page, strategie_page]
-
-# Éléments communs
+# Éléments communs de la page d'accueil
 st.title("Plateforme de Trading")
 # st.logo("chemin/vers/logo.png")  # Décommentez si vous avez un logo
 
-# Construction de la navigation
-page_dict = {}
-
-if st.session_state.role in ["Trader FX", "Admin"]:
-    page_dict["FX"] = fx_pages
-
-if st.session_state.role in ["Trader Options", "Admin"]:
-    page_dict["Options"] = options_pages
+# Construction de la navigation sans connexion
+page_dict = {
+    "Accueil": [accueil_page],
+    "FX": [fx_page],
+    "Options": [grecs_page, pricing_page, strategie_page]
+}
 
 # Affichage de la navigation
-if len(page_dict) > 0:
-    pg = st.navigation({"Compte": account_pages} | page_dict)
-else:
-    pg = st.navigation([st.Page(login)])
+pg = st.navigation(page_dict)
+
+# Contenu de la page d'accueil
+if pg.title == "Accueil":
+    st.header("Bienvenue sur la Plateforme de Trading")
+    st.write("""
+    Utilisez le menu de navigation à gauche pour accéder aux différentes applications:
+    
+    - **Marché FX**: Visualisation et trading sur le marché des changes
+    - **Grecques Options**: Analyse des paramètres de sensibilité des options
+    - **Pricing Options**: Évaluation et tarification des options
+    - **Stratégies Options**: Création et analyse de stratégies d'options
+    """)
+    
+    # Vous pouvez ajouter des statistiques ou des informations supplémentaires ici
+    st.subheader("Marchés en direct")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(label="EUR/USD", value="1.0842", delta="0.0013")
+        st.metric(label="USD/JPY", value="154.32", delta="-0.25")
+    with col2:
+        st.metric(label="VIX", value="14.83", delta="-0.42")
+        st.metric(label="S&P 500", value="5,283.07", delta="0.65%")
 
 # Exécution de la page
 pg.run()
