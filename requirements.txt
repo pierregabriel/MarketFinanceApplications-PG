@@ -3,7 +3,7 @@ streamlit
 numpy 
 pandas 
 matplotlib
-scipy
+scipy>=1.10.0
 plotly
 beautifulsoup4
 lxml
