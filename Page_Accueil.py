@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import datetime
 
 # Définition des pages
 accueil_page = st.Page("Page_Accueil.py", title="Accueil", icon="🏠")
@@ -62,6 +63,17 @@ if pg.title == "Accueil":
     with col2:
         st.metric(label="VIX", value="14.83", delta="-0.42")
         st.metric(label="S&P 500", value="5,283.07", delta="0.65%")
+
+# Pied de page
+st.markdown("---")
+footer = f"""
+<div style="text-align: center; padding: 10px; color: gray; font-size: 0.8em;">
+    <p>© 2024 Plateforme de Trading - Tous droits réservés</p>
+    <p>Dernière mise à jour : {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+    <p>Version 1.0.0 | <a href="#" style="color: gray;">Mentions légales</a> | <a href="#" style="color: gray;">Contact</a></p>
+</div>
+"""
+st.markdown(footer, unsafe_allow_html=True)
 
 # Exécution de la page
 pg.run()
