@@ -1,9 +1,23 @@
 import streamlit as st
 from datetime import datetime
 
+# Configuration de la page
+st.set_page_config(
+    page_title="Projets Finance de Marché - Pierre-Gabriel BILLAULT",
+    page_icon="📊",
+)
+
 # En-tête
 st.title("Portfolio de Projets en Finance de Marché")
 st.subheader("Pierre-Gabriel BILLAULT")
+
+# Informations de contact
+st.markdown("""
+### Contact
+- 📧 Email: billaultpierregabriel@gmail.com
+- 📱 Téléphone: +33 7 81 17 42 24
+- 🔗 LinkedIn: [pierre-gabriel-billault](https://www.linkedin.com/in/pierre-gabriel-billault/)
+""")
 
 # Introduction
 st.markdown("""
@@ -14,45 +28,30 @@ Je me suis principalement concentré sur deux domaines :
 - **Le marché des changes (FX)**
 - **Les options financières**
 
-Explorez les différents projets ci-dessous pour découvrir mes travaux.
+Vous pouvez naviguer entre les différentes sections pour découvrir mes travaux dans ces domaines.
 """)
 
-# Projets FX
-st.header("Projets - Marché FX")
-col1, col2 = st.columns(2)
+# Navigation simplifiée
+st.markdown("## Mes projets")
+options = st.selectbox(
+    "Sélectionnez une catégorie de projets :",
+    ["Tous les projets", "Projets FX", "Projets Options"]
+)
 
-with col1:
-    st.metric(label="EUR/USD", value="1.0842", delta="0.0013")
+if options == "Tous les projets" or options == "Projets FX":
     st.markdown("""
-    ### Analyse de tendances FX
+    ### Projets - Marché FX
     
-    Outil d'analyse des forwards FX et visualisation des tendances de marché.
+    Mes projets sur le marché des changes incluent des analyses de tendances, 
+    des outils de visualisation et des modèles prédictifs pour les principales paires de devises.
     """)
 
-with col2:
-    st.metric(label="USD/JPY", value="154.32", delta="-0.25")
+if options == "Tous les projets" or options == "Projets Options":
     st.markdown("""
-    ### Dashboard FX
+    ### Projets - Options
     
-    Tableau de bord interactif pour le suivi des principales paires de devises.
-    """)
-
-# Projets Options
-st.header("Projets - Options")
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("""
-    ### Pricing d'Options
-    
-    Implémentation du modèle Black-Scholes pour l'évaluation d'options.
-    """)
-
-with col2:
-    st.markdown("""
-    ### Analyse des Grecques
-    
-    Visualisation et analyse des paramètres de sensibilité des options.
+    Mes projets sur les options financières comprennent des modèles de pricing, 
+    des analyses de sensibilité et des stratégies d'options pour différents scénarios de marché.
     """)
 
 # Pied de page
@@ -60,6 +59,6 @@ st.markdown("---")
 st.markdown(f"""
 <div style="text-align: center; padding: 10px; color: gray; font-size: 0.8em;">
     <p>© {datetime.now().year} Pierre-Gabriel BILLAULT</p>
-    <p>Contact: billaultpierregabriel@gmail.com</p>
+    <p>Dernière mise à jour : {datetime.now().strftime('%d/%m/%Y')}</p>
 </div>
 """, unsafe_allow_html=True)
