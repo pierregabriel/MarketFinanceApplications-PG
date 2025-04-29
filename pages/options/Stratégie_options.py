@@ -5,12 +5,7 @@ import plotly.graph_objects as go
 from dataclasses import dataclass
 from typing import List, Optional, Literal, Dict, Tuple
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Visualisateur de Stratégies d'Options",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+
 
 # Définition des types
 @dataclass
