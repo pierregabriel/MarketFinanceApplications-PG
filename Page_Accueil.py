@@ -141,7 +141,7 @@ if 'previous_page' not in st.session_state:
 def navigate_to(page):
     st.session_state.previous_page = st.session_state.current_page
     st.session_state.current_page = page
-    st.experimental_rerun()
+    st.rerun()
 
 # Bouton de retour à l'accueil si nous ne sommes pas sur la page d'accueil
 if st.session_state.current_page != 'home':
