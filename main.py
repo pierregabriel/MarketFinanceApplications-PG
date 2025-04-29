@@ -1,7 +1,9 @@
 import streamlit as st
-
-# Configuration de la navigation
-st.title("Plateforme de Trading")
+st.set_page_config(
+    page_title="Portfolio - Pierre-Gabriel BILLAULT",
+    page_icon="📊",
+    layout="wide"
+)
 
 page_dict = {
     "Accueil": [st.Page("pages/Page_Accueil.py", title="Accueil", icon="🏠")],
