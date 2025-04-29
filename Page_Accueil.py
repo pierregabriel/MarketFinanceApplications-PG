@@ -1,73 +1,82 @@
 # Page_Accueil.py
 import streamlit as st
-import os
 
-# Configuration de la page
-st.set_page_config(
-    layout="wide",
-    page_title="Plateforme de Trading",
-    page_icon="📊"
+# Initialisation du rôle
+if "role" not in st.session_state:
+    st.session_state.role = None
+
+# Rôles disponibles
+ROLES = [None, "Trader FX", "Trader Options", "Admin"]
+
+# Page de connexion
+def login():
+    st.header("Connexion")
+    role = st.selectbox("Sélectionnez votre rôle", ROLES)
+    if st.button("Se connecter"):
+        st.session_state.role = role
+        st.rerun()
+
+# Page de déconnexion
+def logout():
+    st.session_state.role = None
+    st.rerun()
+
+# Rôle actuel
+role = st.session_state.role
+
+# Définition des pages
+logout_page = st.Page(logout, title="Déconnexion", icon="🚪")
+accueil_page = st.Page("Page_Accueil.py", title="Accueil", icon="🏠")
+
+fx_page = st.Page(
+    "pages/FX/FX.py",
+    title="Marché FX",
+    icon="💱",
+    default=(role == "Trader FX")
 )
 
-# Titre principal
-st.title("📈 Plateforme de Trading")
+grecs_page = st.Page(
+    "pages/options/Grecs.py",
+    title="Grecques Options",
+    icon="📊",
+    default=(role == "Trader Options")
+)
 
-# Navigation horizontale
-st.markdown("""
-<style>
-.nav-button {
-    display: inline-block;
-    margin: 5px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    background-color: #f0f2f6;
-    color: black;
-    text-decoration: none;
-    font-weight: bold;
-}
-.nav-button:hover {
-    background-color: #e2e5eb;
-    color: black;
-}
-</style>
-""", unsafe_allow_html=True)
+pricing_page = st.Page(
+    "pages/options/Pricing_options.py",
+    title="Pricing Options",
+    icon="💹"
+)
 
-# Fonction pour vérifier l'existence des pages
-def page_exists(page_path):
-    return os.path.exists(page_path)
+strategie_page = st.Page(
+    "pages/options/Stratégie_options.py",
+    title="Stratégies Options",
+    icon="🔄"
+)
 
-# Sections disponibles avec vérification
-pages = {
-    "🏠 Accueil": {"path": "", "file": "Page_Accueil.py"},
-    "💱 Marché FX": {"path": "pages/FX/FX.py", "file": "FX.py"},
-    "📊 Grecques Options": {"path": "pages/options/Grecs.py", "file": "Grecs.py"},
-    "💹 Pricing Options": {"path": "pages/options/Pricing_options.py", "file": "Pricing_options.py"},
-    "🔄 Stratégies Options": {"path": "pages/options/Stratégie_options.py", "file": "Stratégie_options.py"}
-}
+# Groupement des pages
+account_pages = [logout_page, accueil_page]
+fx_pages = [fx_page]
+options_pages = [grecs_page, pricing_page, strategie_page]
 
-# Création des boutons de navigation
-cols = st.columns(len(pages))
-for i, (name, page_info) in enumerate(pages.items()):
-    with cols[i]:
-        if st.button(name, key=f"nav_{i}"):
-            if page_info["path"] and page_exists(page_info["path"]):
-                st.switch_page(page_info["path"])
-            elif not page_info["path"]:
-                st.rerun()
-            else:
-                st.error(f"Page introuvable: {page_info['file']}")
+# Éléments communs
+st.title("Plateforme de Trading")
+# st.logo("chemin/vers/logo.png")  # Décommentez si vous avez un logo
 
-# Contenu de la page d'accueil
-st.header("Bienvenue sur la plateforme de trading")
-st.write("""
-Sélectionnez une section dans la barre de navigation ci-dessus pour accéder aux différentes fonctionnalités :
+# Construction de la navigation
+page_dict = {}
 
-- **Marché FX** : Analyse du marché des changes
-- **Grecques Options** : Visualisation des grecques des options
-- **Pricing Options** : Outils de pricing d'options
-- **Stratégies Options** : Stratégies avancées sur options
-""")
+if st.session_state.role in ["Trader FX", "Admin"]:
+    page_dict["FX"] = fx_pages
 
-# Pied de page
-st.markdown("---")
-st.markdown("© 2023 Plateforme de Trading - Tous droits réservés")
+if st.session_state.role in ["Trader Options", "Admin"]:
+    page_dict["Options"] = options_pages
+
+# Affichage de la navigation
+if len(page_dict) > 0:
+    pg = st.navigation({"Compte": account_pages} | page_dict)
+else:
+    pg = st.navigation([st.Page(login)])
+
+# Exécution de la page
+pg.run()
