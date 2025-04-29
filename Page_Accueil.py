@@ -1,5 +1,6 @@
 # Page_Accueil.py
 import streamlit as st
+import os
 
 # Configuration de la page
 st.set_page_config(
@@ -31,25 +32,30 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Sections disponibles
-sections = {
-    "🏠 Accueil": "",
-    "💱 Marché FX": "FX/FX",
-    "📊 Grecques Options": "options/Grecs",
-    "💹 Pricing Options": "options/Pricing_options",
-    "🔄 Stratégies Options": "options/Stratégie_options"
+# Fonction pour vérifier l'existence des pages
+def page_exists(page_path):
+    return os.path.exists(page_path)
+
+# Sections disponibles avec vérification
+pages = {
+    "🏠 Accueil": {"path": "", "file": "Page_Accueil.py"},
+    "💱 Marché FX": {"path": "pages/FX/FX.py", "file": "FX.py"},
+    "📊 Grecques Options": {"path": "pages/options/Grecs.py", "file": "Grecs.py"},
+    "💹 Pricing Options": {"path": "pages/options/Pricing_options.py", "file": "Pricing_options.py"},
+    "🔄 Stratégies Options": {"path": "pages/options/Stratégie_options.py", "file": "Stratégie_options.py"}
 }
 
 # Création des boutons de navigation
-cols = st.columns(5)
-for i, (name, path) in enumerate(sections.items()):
+cols = st.columns(len(pages))
+for i, (name, page_info) in enumerate(pages.items()):
     with cols[i]:
         if st.button(name, key=f"nav_{i}"):
-            if path:  # Si ce n'est pas la page d'accueil
-                st.switch_page(f"pages/{path}.py")
-            else:
-                # Rafraîchir la page actuelle (Accueil)
+            if page_info["path"] and page_exists(page_info["path"]):
+                st.switch_page(page_info["path"])
+            elif not page_info["path"]:
                 st.rerun()
+            else:
+                st.error(f"Page introuvable: {page_info['file']}")
 
 # Contenu de la page d'accueil
 st.header("Bienvenue sur la plateforme de trading")
