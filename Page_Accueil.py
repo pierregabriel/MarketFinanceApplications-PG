@@ -1,75 +1,63 @@
+# Page_Accueil.py
 import streamlit as st
 
-# Initialisation du rôle dans Session State
-if "role" not in st.session_state:
-    st.session_state.role = None
-
-# Rôles disponibles
-ROLES = [None, "Trader FX", "Trader Options", "Admin"]
-
-# Page de login
-def login():
-    st.header("Connexion")
-    role = st.selectbox("Sélectionnez votre rôle", ROLES)
-    if st.button("Se connecter"):
-        st.session_state.role = role
-        st.rerun()
-
-# Page de logout
-def logout():
-    st.session_state.role = None
-    st.rerun()
-
-# Rôle actuel
-role = st.session_state.role
-
-# Définition des pages
-logout_page = st.Page(logout, title="Déconnexion", icon="🚪")
-accueil = st.Page("Page_Accueil.py", title="Accueil", icon="🏠")
-
-fx_page = st.Page(
-    "pages/FX/FX.py",
-    title="Marché FX",
-    icon="💱",
-    default=(role == "Trader FX")
+# Configuration de la page
+st.set_page_config(
+    layout="wide",
+    page_title="Plateforme de Trading",
+    page_icon="📊"
 )
 
-grecs_page = st.Page(
-    "pages/options/Grecs.py",
-    title="Grecques Options",
-    icon="📊",
-    default=(role == "Trader Options")
-)
+# Titre principal
+st.title("📈 Plateforme de Trading")
 
-pricing_page = st.Page(
-    "pages/options/Pricing_options.py",
-    title="Pricing Options",
-    icon="💹"
-)
+# Navigation horizontale
+st.markdown("""
+<style>
+.nav-button {
+    display: inline-block;
+    margin: 5px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #f0f2f6;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+.nav-button:hover {
+    background-color: #e2e5eb;
+    color: black;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# Groupement des pages
-account_pages = [logout_page, accueil]
-fx_pages = [fx_page]
-options_pages = [grecs_page, pricing_page]
+# Sections disponibles
+sections = {
+    "🏠 Accueil": "Page_Accueil",
+    "💱 Marché FX": "pages/FX/FX",
+    "📊 Grecques Options": "pages/options/Grecs",
+    "💹 Pricing Options": "pages/options/Pricing_options",
+    "🔄 Stratégies Options": "pages/options/Stratégie_options"
+}
 
-# Éléments communs
-st.title("Plateforme de Trading")
-# st.logo("chemin/vers/votre/logo.png")  # Décommentez si vous avez un logo
+# Création des boutons de navigation
+cols = st.columns(5)
+for i, (name, path) in enumerate(sections.items()):
+    with cols[i]:
+        if st.button(name, key=f"nav_{i}"):
+            st.switch_page(f"{path}.py")
 
-# Construction de la navigation
-page_dict = {}
+# Contenu de la page d'accueil
+st.header("Bienvenue sur la plateforme de trading")
+st.write("""
+Sélectionnez une section dans la barre de navigation ci-dessus pour accéder aux différentes fonctionnalités :
 
-if st.session_state.role in ["Trader FX", "Admin"]:
-    page_dict["FX"] = fx_pages
+- **Marché FX** : Analyse du marché des changes
+- **Grecques Options** : Visualisation des grecques des options
+- **Pricing Options** : Outils de pricing d'options
+- **Stratégies Options** : Stratégies avancées sur options
+""")
 
-if st.session_state.role in ["Trader Options", "Admin"]:
-    page_dict["Options"] = options_pages
-
-# Affichage de la navigation
-if len(page_dict) > 0:
-    pg = st.navigation({"Compte": account_pages} | page_dict)
-else:
-    pg = st.navigation([st.Page(login)])
-
-# Exécution de la page
-pg.run()
+# Pied de page
+st.markdown("---")
+st.markdown("© 2023 Plateforme de Trading - Tous droits réservés")
