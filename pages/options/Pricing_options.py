@@ -5,6 +5,9 @@ import pandas as pd
 from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
+from curl_cffi import requests
+
+session = requests.Session(impersonate="chrome")
 
 # CSS pour le style
 st.markdown("""
@@ -39,7 +42,7 @@ st.markdown("""
 def fetch_stock_data(ticker, period="1d"):
     """Récupère les données de cours pour un ticker donné avec mise en cache"""
     try:
-        data = yf.download(ticker, period=period, interval="1d")
+        data = yf.download(ticker, period=period, interval="1d", session = session)
         if data.empty:
             st.warning(f"Aucune donnée disponible pour {ticker}")
             return pd.DataFrame()
@@ -54,7 +57,7 @@ def fetch_historical_data(ticker):
     """Récupère les données historiques pour le calcul de volatilité"""
     try:
         # Télécharge les données des 60 derniers jours de cotation
-        data = yf.download(ticker, period="60d", interval="1d")
+        data = yf.download(ticker, period="60d", interval="1d", session = session)
         if data.empty:
             return pd.DataFrame()
         
