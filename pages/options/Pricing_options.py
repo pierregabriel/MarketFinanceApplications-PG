@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from curl_cffi import requests
 
 session = requests.Session(impersonate="chrome")
-
+self._set_session(session or requests.Session(impersonate="chrome"))
 # CSS pour le style
 st.markdown("""
 <style>
