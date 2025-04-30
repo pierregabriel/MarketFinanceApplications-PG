@@ -5,33 +5,32 @@ import pandas as pd
 from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
-import plotly.express as px
-from datetime import date, timedelta
 
+# Configuration de la page
+st.set_page_config(
+    page_title="Options ",
+    page_icon="📈",
+    layout="wide"
+)
 
-# Custom CSS for better styling
+# CSS pour le style
 st.markdown("""
 <style>
     .main-header {
-        font-size: 2.5rem;
+        font-size: 2rem;
         color: #1E88E5;
         text-align: center;
         margin-bottom: 1rem;
     }
-    .sub-header {
-        font-size: 1.5rem;
-        color: #0D47A1;
-        margin-top: 1rem;
-    }
     .card {
         background-color: #f8f9fa;
         border-radius: 10px;
-        padding: 20px;
+        padding: 15px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
     .metric-value {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-weight: bold;
         color: #1E88E5;
     }
@@ -39,17 +38,10 @@ st.markdown("""
         font-size: 1rem;
         color: #424242;
     }
-    .chart-container {
-        background-color: white;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 25px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# Function to calculate Black-Scholes option prices
+# Fonctions de calcul Black-Scholes
 def black_scholes_call(S, K, T, r, sigma):
     if T <= 0:
         return max(0, S - K)
@@ -66,7 +58,7 @@ def black_scholes_put(S, K, T, r, sigma):
     put_price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
     return put_price
 
-# Calculate option Greeks
+# Calcul des Greeks
 def calculate_greeks(S, K, T, r, sigma, option_type="call"):
     if T <= 0:
         return {"delta": 1 if S > K else 0, "gamma": 0, "theta": 0, "vega": 0, "rho": 0}
@@ -80,7 +72,7 @@ def calculate_greeks(S, K, T, r, sigma, option_type="call"):
     else:
         delta = norm.cdf(d1) - 1
     
-    # Gamma (same for call and put)
+    # Gamma (même pour call et put)
     gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
     
     # Theta
@@ -89,7 +81,7 @@ def calculate_greeks(S, K, T, r, sigma, option_type="call"):
     else:
         theta = -S * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) + r * K * np.exp(-r * T) * norm.cdf(-d2)
     
-    # Vega (same for call and put)
+    # Vega (même pour call et put)
     vega = S * np.sqrt(T) * norm.pdf(d1)
     
     # Rho
@@ -101,844 +93,338 @@ def calculate_greeks(S, K, T, r, sigma, option_type="call"):
     return {
         "delta": delta,
         "gamma": gamma,
-        "theta": theta / 365,  # Daily theta
-        "vega": vega / 100,    # For 1% change in volatility
-        "rho": rho / 100       # For 1% change in interest rate
+        "theta": theta / 365,  # Theta quotidien
+        "vega": vega / 100,    # Pour un changement de 1% de volatilité
+        "rho": rho / 100       # Pour un changement de 1% de taux d'intérêt
     }
 
-# Function to calculate historical volatility using the method provided
-def calculate_historical_volatility(ticker, days=252):  # Default to 1 year of trading days
+# Fonction pour calculer la volatilité historique
+def calculate_volatility(ticker):
     try:
-        # Download historical data
-        data = yf.download(ticker, period=f'{days}d', interval='1d')
-        
+        # Télécharge les données des 60 derniers jours de cotation
+        data = yf.download(ticker, period="60d", interval="1d")
         if data.empty:
-            return 0.01, 0.3, pd.DataFrame()  # Default volatility if no data
-            
-        # Calculate daily returns
-        data['Daily Returns'] = data['Close'].pct_change().fillna(0)
+            return 0.3  # Valeur par défaut si aucune donnée n'est disponible
         
-        # Calculate rolling volatility (21-day window)
-        data['Daily Volatility'] = data['Daily Returns'].rolling(window=21).std()
+        # Calcul des rendements journaliers
+        data['Returns'] = data['Close'].pct_change().fillna(0)
         
-        # Calculate annualized volatility (both current and historical)
-        data['Annualized Volatility'] = data['Daily Volatility'] * np.sqrt(252)
-        
-        # Get current annualized volatility (latest value)
-        current_annualized_vol = data['Annualized Volatility'].iloc[-1]
-        
-        # Get historical annualized volatility (mean of the period)
-        historical_annualized_vol = data['Annualized Volatility'].mean()
-        
-        return current_annualized_vol, historical_annualized_vol, data[['Close', 'Daily Returns', 'Daily Volatility', 'Annualized Volatility']].dropna()
-    except Exception as e:
-        st.error(f"Error calculating volatility: {e}")
-        return 0.01, 0.3, pd.DataFrame()  # Default volatility if calculation fails
+        # Écart-type des rendements * racine de 252 (jours de trading par an)
+        # pour annualiser la volatilité
+        volatility = data['Returns'].std() * np.sqrt(252)
+        return volatility
+    except:
+        return 0.3  # Valeur par défaut en cas d'erreur
 
-def adjust_volatility_for_maturity(base_volatility, days_to_expiry):
-    """
-    Ajuste la volatilité en fonction de la maturité de l'option.
-    La volatilité est ajustée en utilisant la racine carrée du temps.
-    
-    Args:
-        base_volatility (float): Volatilité de base (annuelle)
-        days_to_expiry (int): Nombre de jours jusqu'à l'échéance
-        
-    Returns:
-        float: Volatilité ajustée
-    """
-    # Convertir les jours en années
-    T = days_to_expiry / 365.0
-    
-    # Ajuster la volatilité en utilisant la racine carrée du temps
-    # Si la volatilité de base est annuelle, on la multiplie par sqrt(T)
-    adjusted_volatility = base_volatility * np.sqrt(T)
-    
-    return adjusted_volatility
-
-# Function to plot option payoff at expiration with enhanced visuals
+# Diagramme de payoff mis à jour pour afficher acheteur et vendeur avec zoom sur point d'équilibre
 def plot_option_payoff(S, K, premium, option_type="call"):
-    # Create more data points for smoother curve
-    # Réduire davantage la plage pour un zoom plus important autour du break-even
-    stock_prices = np.linspace(max(0.85 * K, 0.85 * S), 1.15 * max(K, S), 200)
-    
+    # Calcul du point d'équilibre
     if option_type == "call":
-        payoffs = np.maximum(stock_prices - K, 0) - premium
         breakeven = K + premium
     else:
-        payoffs = np.maximum(K - stock_prices, 0) - premium
         breakeven = K - premium
     
+    # Calcul des limites pour zoomer autour du prix actuel et du point d'équilibre
+    # On prend une marge de ±15% autour du min/max entre le prix actuel et le point d'équilibre
+    price_range = abs(S - breakeven) * 0.5  # 50% de la distance entre S et breakeven
+    min_price = min(S, breakeven) - price_range
+    max_price = max(S, breakeven) + price_range
+    
+    # On s'assure d'avoir une marge minimale de 5% du prix d'exercice
+    min_price = min(min_price, K * 0.95)
+    max_price = max(max_price, K * 1.05)
+    
+    # Génération des prix pour le graphique (concentrés autour du point d'intérêt)
+    stock_prices = np.linspace(min_price, max_price, 150)
+    
+    if option_type == "call":
+        # Payoff pour l'acheteur du call
+        buyer_payoffs = np.maximum(stock_prices - K, 0) - premium
+        buyer_breakeven = K + premium
+        
+        # Payoff pour le vendeur du call
+        seller_payoffs = premium - np.maximum(stock_prices - K, 0)
+        seller_breakeven = buyer_breakeven
+    else:
+        # Payoff pour l'acheteur du put
+        buyer_payoffs = np.maximum(K - stock_prices, 0) - premium
+        buyer_breakeven = K - premium
+        
+        # Payoff pour le vendeur du put
+        seller_payoffs = premium - np.maximum(K - stock_prices, 0)
+        seller_breakeven = buyer_breakeven
+    
     fig = go.Figure()
     
-    # Add payoff curve with improved styling
+    # Courbe de payoff pour l'acheteur
     fig.add_trace(go.Scatter(
         x=stock_prices, 
-        y=payoffs, 
+        y=buyer_payoffs, 
         mode='lines', 
-        name=f'{option_type.capitalize()} Payoff',
-        line=dict(color='blue' if option_type == "call" else 'red', width=3)
+        name=f'Acheteur {option_type.capitalize()}',
+        line=dict(color='blue' if option_type == "call" else 'green', width=3)
     ))
     
-    # Add zero line
+    # Courbe de payoff pour le vendeur
+    fig.add_trace(go.Scatter(
+        x=stock_prices, 
+        y=seller_payoffs, 
+        mode='lines', 
+        name=f'Vendeur {option_type.capitalize()}',
+        line=dict(color='red' if option_type == "call" else 'orange', width=3)
+    ))
+    
+    # Ligne zéro
     fig.add_shape(
         type="line", line=dict(dash="dash", width=1.5, color="gray"),
-        x0=stock_prices[0], y0=0, x1=stock_prices[-1], y1=0
+        x0=min_price, y0=0, x1=max_price, y1=0
     )
     
-    # Add strike price line
-    fig.add_shape(
-        type="line", line=dict(dash="dot", width=1.5, color="green"),
-        x0=K, y0=min(payoffs)-0.3, x1=K, y1=max(payoffs)+0.3
-    )
-    
-    # Add current stock price line
-    fig.add_shape(
-        type="line", line=dict(dash="dot", width=1.5, color="orange"),
-        x0=S, y0=min(payoffs)-0.3, x1=S, y1=max(payoffs)+0.3
-    )
-    
-    # Add breakeven point
+    # Point d'équilibre
     fig.add_trace(go.Scatter(
-        x=[breakeven], 
+        x=[buyer_breakeven], 
         y=[0], 
         mode='markers', 
-        name='Breakeven Point',
-        marker=dict(color='green', size=12, symbol='diamond')
+        name='Point d\'équilibre',
+        marker=dict(color='purple', size=12, symbol='diamond')
     ))
     
-    # Add current stock price marker
-    current_payoff = np.maximum(S - K, 0) - premium if option_type == "call" else np.maximum(K - S, 0) - premium
-    fig.add_trace(go.Scatter(
-        x=[S], 
-        y=[current_payoff], 
-        mode='markers', 
-        name='Current Stock Price',
-        marker=dict(color='orange', size=12)
-    ))
-    
-    # Add annotations
+    # Prix d'exercice
+    fig.add_shape(
+        type="line", line=dict(dash="dot", width=1.5, color="darkgray"),
+        x0=K, y0=min(np.min(buyer_payoffs), np.min(seller_payoffs)), 
+        x1=K, y1=max(np.max(buyer_payoffs), np.max(seller_payoffs))
+    )
     fig.add_annotation(
-        x=K, y=min(payoffs),
+        x=K, y=min(np.min(buyer_payoffs), np.min(seller_payoffs)),
         text=f"Strike: ${K:.2f}",
         showarrow=True,
         arrowhead=1,
-        ax=0,
-        ay=30
+        yshift=-10
     )
     
-    fig.add_annotation(
-        x=S, y=current_payoff,
-        text=f"Current: ${S:.2f}",
-        showarrow=True,
-        arrowhead=1,
-        ax=0,
-        ay=-30
-    )
-    
-    fig.add_annotation(
-        x=breakeven, y=0,
-        text=f"Breakeven: ${breakeven:.2f}",
-        showarrow=True,
-        arrowhead=1,
-        ax=0,
-        ay=-30
-    )
-    
-    # Improve layout
-    fig.update_layout(
-        title=f"{option_type.capitalize()} Option Payoff at Expiration",
-        xaxis_title="Stock Price at Expiration",
-        yaxis_title="Profit/Loss ($)",
-        legend=dict(x=0.02, y=0.98),
-        hovermode="x unified",
-        height=500,  # Increased height
-        margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor='rgba(240,240,240,0.5)',
-    )
-    
-    # Ajuster les limites des axes pour un zoom plus important
-    y_range = max(payoffs) - min(payoffs)
-    fig.update_yaxes(
-        range=[min(payoffs) - 0.05 * y_range, max(payoffs) + 0.05 * y_range],
-        tickprefix="$",
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
-    
-    fig.update_xaxes(
-        range=[stock_prices[0], stock_prices[-1]],
-        tickprefix="$",
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
-    
-    return fig
-
-# Function to plot option price sensitivity with enhanced visuals
-def plot_sensitivity(S, K, T, r, sigma, option_type="call"):
-    # Create more data points for smoother curve
-    stock_prices = np.linspace(max(0.6 * K, 0.6 * S), 1.4 * max(K, S), 200)
-    option_prices = []
-    
-    for price in stock_prices:
-        if option_type == "call":
-            option_prices.append(black_scholes_call(price, K, T, r, sigma))
-        else:
-            option_prices.append(black_scholes_put(price, K, T, r, sigma))
-    
-    fig = go.Figure()
-    
-    # Add option price curve with improved styling
-    fig.add_trace(go.Scatter(
-        x=stock_prices, 
-        y=option_prices, 
-        mode='lines', 
-        name=f'{option_type.capitalize()} Price',
-        line=dict(color='blue' if option_type == "call" else 'red', width=3)
-    ))
-    
-    # Add strike price line
-    fig.add_shape(
-        type="line", line=dict(dash="dot", width=1.5, color="green"),
-        x0=K, y0=0, x1=K, y1=max(option_prices)*1.1
-    )
-    
-    # Add current stock price line
-    fig.add_shape(
-        type="line", line=dict(dash="dot", width=1.5, color="orange"),
-        x0=S, y0=0, x1=S, y1=max(option_prices)*1.1
-    )
-    
-    # Add current option price marker
-    current_price = black_scholes_call(S, K, T, r, sigma) if option_type == "call" else black_scholes_put(S, K, T, r, sigma)
+    # Prix actuel pour l'acheteur
+    current_buyer_payoff = (np.maximum(S - K, 0) - premium) if option_type == "call" else (np.maximum(K - S, 0) - premium)
     fig.add_trace(go.Scatter(
         x=[S], 
-        y=[current_price], 
+        y=[current_buyer_payoff], 
         mode='markers', 
-        name='Current Option Price',
-        marker=dict(color='orange', size=12)
+        name='Prix actuel (acheteur)',
+        marker=dict(color='darkblue', size=12)
     ))
     
-    # Add annotations
+    # Prix actuel pour le vendeur
+    current_seller_payoff = (premium - np.maximum(S - K, 0)) if option_type == "call" else (premium - np.maximum(K - S, 0))
+    fig.add_trace(go.Scatter(
+        x=[S], 
+        y=[current_seller_payoff], 
+        mode='markers', 
+        name='Prix actuel (vendeur)',
+        marker=dict(color='darkred', size=12)
+    ))
+    
+    # Ligne verticale au prix actuel
+    fig.add_shape(
+        type="line", line=dict(dash="dashdot", width=1.5, color="orange"),
+        x0=S, y0=min(np.min(buyer_payoffs), np.min(seller_payoffs)), 
+        x1=S, y1=max(np.max(buyer_payoffs), np.max(seller_payoffs))
+    )
     fig.add_annotation(
-        x=K, y=min(option_prices),
-        text=f"Strike: ${K:.2f}",
+        x=S, y=max(np.max(buyer_payoffs), np.max(seller_payoffs)),
+        text=f"Prix actuel: ${S:.2f}",
         showarrow=True,
         arrowhead=1,
-        ax=0,
-        ay=30
+        yshift=10
     )
     
-    fig.add_annotation(
-        x=S, y=current_price,
-        text=f"Current: ${S:.2f}\nOption: ${current_price:.2f}",
-        showarrow=True,
-        arrowhead=1,
-        ax=0,
-        ay=-40
-    )
-    
-    # Improve layout
     fig.update_layout(
-        title=f"{option_type.capitalize()} Option Price vs. Stock Price",
-        xaxis_title="Stock Price",
-        yaxis_title="Option Price ($)",
-        legend=dict(x=0.02, y=0.98),
-        hovermode="x unified",
-        height=500,  # Increased height
+        title=f"Payoff de l'option {option_type} à l'échéance (Acheteur vs Vendeur)",
+        xaxis_title="Prix de l'action à l'échéance",
+        yaxis_title="Profit/Perte ($)",
+        height=500, # Augmentation de la hauteur pour une meilleure visualisation
         margin=dict(l=20, r=20, t=50, b=20),
         plot_bgcolor='rgba(240,240,240,0.5)',
-    )
-    
-    # Improve axis formatting
-    fig.update_xaxes(
-        tickprefix="$",
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
-    
-    fig.update_yaxes(
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
-    
-    return fig
-
-# Function to plot price and volatility using Plotly
-def plot_price_and_volatility(ticker, period="6mo"):
-    """
-    Crée un graphique montrant le prix de clôture et la volatilité d'une action.
-    
-    Args:
-        ticker (str): Le symbole de l'action (ex: "AAPL")
-        period (str): La période à analyser (ex: "6mo", "1y", "5d", "max")
-    """
-    try:
-        # Télécharger les données boursières
-        stock = yf.Ticker(ticker)
-        historique = stock.history(period=period)
-        
-        if historique.empty:
-            st.error(f"Impossible de récupérer les données pour {ticker}")
-            return None
-        
-        # Calculer la volatilité
-        days = 126 if period == "6mo" else 252  # Ajuster le nombre de jours selon la période
-        daily_vol, annual_vol, vol_data = calculate_historical_volatility(ticker, days=days)
-        
-        # Créer le graphique avec Plotly
-        fig = go.Figure()
-        
-        # Ajouter le prix de clôture
-        fig.add_trace(go.Scatter(
-            x=historique.index,
-            y=historique["Close"],
-            name="Prix de clôture",
-            line=dict(color='green', width=2),
-            yaxis="y"
-        ))
-        
-        # Ajouter la volatilité
-        fig.add_trace(go.Scatter(
-            x=vol_data.index,
-            y=vol_data['Annualized Volatility'] * 100,
-            name="Volatilité annuelle",
-            line=dict(color='red', width=2),
-            yaxis="y2"
-        ))
-        
-        # Mettre à jour la mise en page
-        fig.update_layout(
-            title=f"Cours de l'action {ticker} et Volatilité - {period}",
-            xaxis=dict(title="Date"),
-            yaxis=dict(
-                title="Prix de clôture (USD)",
-                titlefont=dict(color="green"),
-                tickfont=dict(color="green")
-            ),
-            yaxis2=dict(
-                title="Volatilité annuelle (%)",
-                titlefont=dict(color="red"),
-                tickfont=dict(color="red"),
-                overlaying="y",
-                side="right"
-            ),
-            showlegend=True,
-            legend=dict(
-                yanchor="top",
-                y=0.99,
-                xanchor="left",
-                x=0.01
-            ),
-            plot_bgcolor='rgba(240,240,240,0.5)',
-            height=500
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         )
-        
-        return fig
-    except Exception as e:
-        st.error(f"Erreur lors de la création du graphique: {e}")
-        return None
-
-# Function to plot historical volatility with enhanced visuals
-def plot_historical_volatility(vol_data, current_vol, historical_vol):
-    if vol_data.empty:
-        return None
-        
-    fig = go.Figure()
-    
-    # Add historical volatility line (annualized)
-    fig.add_trace(go.Scatter(
-        x=vol_data.index, 
-        y=vol_data['Annualized Volatility'] * 100, 
-        mode='lines', 
-        name='Rolling Annualized Volatility',
-        line=dict(color='purple', width=3)
-    ))
-    
-    # Add current volatility line (annualized)
-    fig.add_shape(
-        type="line", line=dict(dash="dash", width=2, color="red"),
-        x0=vol_data.index[0], y0=current_vol*100, x1=vol_data.index[-1], y1=current_vol*100
     )
     
-    # Add annotation for current volatility
-    fig.add_annotation(
-        x=vol_data.index[-1], y=current_vol*100,
-        text=f"Current Volatility: {current_vol*100:.1f}%",
-        showarrow=True,
-        arrowhead=1,
-        ax=50,
-        ay=-30
-    )
-    
-    # Add stock price on secondary y-axis
-    fig.add_trace(go.Scatter(
-        x=vol_data.index,
-        y=vol_data['Close'],
-        mode='lines',
-        name='Stock Price',
-        line=dict(color='green', width=2),
-        yaxis="y2"
-    ))
-    
-    # Improve layout
-    fig.update_layout(
-        title="Historical Volatility vs. Stock Price",
-        xaxis_title="Date",
-        yaxis_title="Volatility (%)",
-        yaxis2=dict(
-            title="Stock Price ($)",
-            titlefont=dict(color="green"),
-            tickfont=dict(color="green"),
-            overlaying="y",
-            side="right",
-            tickprefix="$"
-        ),
-        hovermode="x unified",
-        height=500,
-        margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor='rgba(240,240,240,0.5)',
-        legend=dict(x=0.02, y=0.98)
-    )
-    
-    # Improve axis formatting
-    fig.update_xaxes(
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
-    
-    fig.update_yaxes(
-        gridcolor='rgba(200,200,200,0.8)',
-        zeroline=True,
-        zerolinewidth=1.5,
-        zerolinecolor='rgba(0,0,0,0.5)'
-    )
+    fig.update_xaxes(tickprefix="$")
+    fig.update_yaxes(tickprefix="$")
     
     return fig
 
-# Main application
+# La fonction plot_sensitivity a été retirée car l'onglet correspondant a été supprimé
+
+# Application principale
 def main():
-    st.markdown('<h1 class="main-header">Advanced Options Calculator</h1>', unsafe_allow_html=True)
+    st.markdown("""
+<h1 class="main-header" style="font-size: 2.5rem;">Calculateur d'Options</h1>
+""", unsafe_allow_html=True)
     
-    # Sidebar for inputs
-    with st.sidebar:
-        st.markdown('<h2 class="sub-header">Configuration</h2>', unsafe_allow_html=True)
+    # Disposition en 2 colonnes: colonne gauche pour les inputs, colonne droite pour les résultats
+    col_inputs, col_results = st.columns([1, 2])
+    
+    # Colonne des inputs
+    with col_inputs:
+        st.markdown("""
+<div style='text-align: center;'>
+    <h3 style='color: black;'>Filtres</h3>
+</div>
+""", unsafe_allow_html=True)
         
-        # Create tabs for single stock vs comparison
-        analysis_mode = st.radio("Analysis Mode", ["Single Stock", "Compare Stocks"])
+        # Type d'option (déplacé en haut)
+        option_type = st.radio("Type d'Option", ["Call", "Put"])
         
-        if analysis_mode == "Single Stock":
-            # Single stock analysis
-            ticker = st.text_input('Enter Stock Ticker', 'AAPL').upper()
-            
-            # Fetch stock data
-            try:
-                stock = yf.Ticker(ticker)
-                stock_info = stock.history(period="1d")
-                current_price = stock_info['Close'][0]
-                
-                st.markdown(f"<div class='card'><p class='metric-label'>Current Price</p><p class='metric-value'>${current_price:.2f}</p></div>", unsafe_allow_html=True)
-                
-                # Fixed expiration periods instead of date picker
-                expiry_periods = {
-                    "15 Days": 15,
-                    "1 Month": 30,
-                    "2 Months": 60,
-                    "3 Months": 90,
-                    "6 Months": 180,
-                    "1 Year": 365
-                }
-                
-                selected_period = st.selectbox("Select Expiration Period", list(expiry_periods.keys()))
-                days_to_expiry = expiry_periods[selected_period]
-                
-                # Calculate expiration date and time to expiry in years
-                today = datetime.datetime.now()
-                expiry_date = today + datetime.timedelta(days=days_to_expiry)
-                T = days_to_expiry / 365.0
-                
-                st.markdown(f"<div class='card'><p class='metric-label'>Days to Expiration</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='card'><p class='metric-label'>Expiration Date</p><p class='metric-value'>{expiry_date.strftime('%Y-%m-%d')}</p></div>", unsafe_allow_html=True)
-                
-                # Strike price selection
-                strike_method = st.radio("Strike Price Method", ["ATM", "Custom % OTM/ITM", "Custom Value"])
-                
-                if strike_method == "ATM":
-                    K = current_price
-                elif strike_method == "Custom % OTM/ITM":
-                    moneyness = st.slider("% OTM (+) or ITM (-)", min_value=-30, max_value=30, value=0, step=5)
-                    K = current_price * (1 + moneyness/100)
-                else:
-                    K = st.number_input('Strike Price (K)', value=float(current_price), min_value=0.01)
-                
-                # Calculate historical volatility manually using the new method
-                current_vol, historical_vol, vol_data = calculate_historical_volatility(ticker)
-
-                # Display both daily and annualized volatility
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Current Volatility</p><p class='metric-value'>{current_vol*100:.2f}%</p></div>", unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Historical Volatility</p><p class='metric-value'>{historical_vol*100:.2f}%</p></div>", unsafe_allow_html=True)
-
-                # Use current volatility as default for the slider instead of historical volatility
-                base_volatility = st.slider("Base Volatility (σ) %", min_value=1.0, max_value=200.0, value=float(current_vol * 100), step=0.1) / 100
-                
-                # Ajuster la volatilité en fonction de la maturité
-                adjusted_volatility = adjust_volatility_for_maturity(base_volatility, days_to_expiry)
-                
-                # Interest rate
-                r = st.slider("Risk-free Rate (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
-                
-                # Option type selection
-                option_type = st.radio("Option Type", ["Call", "Put"])
-                
-                # Advanced settings
-                with st.expander("Advanced Settings"):
-                    show_greeks = st.checkbox("Show Greeks", value=True)
-                    show_payoff = st.checkbox("Show Payoff Diagram", value=True)
-                    show_sensitivity = st.checkbox("Show Price Sensitivity", value=True)
-                    show_historical_vol = st.checkbox("Show Historical Volatility", value=True)
-                    show_price_vol = st.checkbox("Show Price and Volatility Chart", value=True)
-                
-            except Exception as e:
-                st.error(f"Error retrieving data for {ticker}: {e}")
-                return
+        # Ticker de l'action
+        ticker = st.text_input('Symbole de l\'action', 'AAPL').upper()
         
-        else:
-            # Comparison mode
-            st.markdown("Compare options across different stocks")
+        try:
+            # Récupération des données
+            stock = yf.Ticker(ticker)
+            stock_info = stock.history(period="1d")
+            current_price = stock_info['Close'][0]
             
-            # Allow adding multiple tickers
-            num_stocks = st.slider("Number of stocks to compare", min_value=2, max_value=5, value=2)
+            st.markdown(f"<p class='metric-label'>Prix actuel</p><p class='metric-value'>${current_price:.2f}</p>", unsafe_allow_html=True)
             
-            tickers = []
-            for i in range(num_stocks):
-                ticker = st.text_input(f'Stock {i+1} Ticker', value=f"{'AAPL' if i==0 else 'MSFT' if i==1 else 'GOOGL' if i==2 else 'AMZN' if i==3 else 'META'}")
-                tickers.append(ticker.upper())
-            
-            # Common parameters for all stocks
-            st.markdown("### Common Parameters")
-            
-            # Fixed expiration periods
-            expiry_periods = {
-                "15 Days": 15,
-                "1 Month": 30,
-                "2 Months": 60,
-                "3 Months": 90,
-                "6 Months": 180,
-                "1 Year": 365
+            # Période d'expiration
+            expiry_options = {
+                "15 Jours": 15,
+                "1 Mois": 30,
+                "2 Mois": 60,
+                "3 Mois": 90,
+                "6 Mois": 180,
+                "1 An": 365
             }
             
-            selected_period = st.selectbox("Select Expiration Period", list(expiry_periods.keys()))
-            days_to_expiry = expiry_periods[selected_period]
+            selected_period = st.selectbox("Période d'expiration", list(expiry_options.keys()))
+            days_to_expiry = expiry_options[selected_period]
             
-            # Calculate time to expiry in years
+            # Calcul de la date d'expiration et du temps jusqu'à l'expiration en années
             T = days_to_expiry / 365.0
             
-            # Strike price selection method
-            strike_method = st.radio("Strike Price Method", ["ATM", "Custom % OTM/ITM", "Fixed Price"])
+            # Prix d'exercice
+            strike_method = st.radio("Méthode de prix d'exercice", ["ATM", "Personnalisé"])
             
-            if strike_method == "Custom % OTM/ITM":
-                moneyness = st.slider("% OTM (+) or ITM (-)", min_value=-30, max_value=30, value=0, step=5)
-            elif strike_method == "Fixed Price":
-                fixed_strike = st.number_input("Fixed Strike Price", value=100.0, min_value=0.01)
+            if strike_method == "ATM":
+                K = current_price
+            else:
+                K = st.number_input('Prix d\'exercice (K)', value=float(current_price), min_value=0.01)
             
-            # Other parameters
-            r = st.slider("Risk-free Rate (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
-            base_volatility = st.slider("Base Volatility (σ) %", min_value=1.0, max_value=200.0, value=30.0, step=0.1) / 100
+            # Volatilité
+            volatility = calculate_volatility(ticker)
+            sigma = st.slider("Volatilité (σ) %", min_value=1.0, max_value=100.0, value=float(volatility * 100), step=0.1) / 100
             
-            # Ajuster la volatilité en fonction de la maturité
-            adjusted_volatility = adjust_volatility_for_maturity(base_volatility, days_to_expiry)
+            st.info(f"""
+            **Calcul de la volatilité**: La volatilité historique est calculée sur les 60 derniers jours de trading.
+            Elle représente l'écart-type annualisé des rendements journaliers de l'action (×√252).
+            Valeur calculée pour {ticker}: **{volatility*100:.2f}%**
+            """, icon="ℹ️")
             
-            # Option type
-            option_type = st.radio("Option Type", ["Call", "Put"])
+            # Taux d'intérêt
+            r = st.slider("Taux sans risque (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
+            st.info("""
+Le **taux sans risque** représente le rendement d'un investissement sans risque sur la durée de l'option.
+Généralement, on utilise le rendement des **obligations d'État** de maturité similaire et dans la devise de l'option.
+Pour une évaluation précise, consultez les données actuelles des rendements obligataires.
+""")
+            
+        except Exception as e:
+            st.error(f"Erreur lors de la récupération des données pour {ticker}: {e}")
+            st.stop()
+            
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Main content area
-    if analysis_mode == "Single Stock":
-        # Calculate option prices
-        if option_type == "Call":
-            option_price = black_scholes_call(current_price, K, T, r, adjusted_volatility)
-            greeks = calculate_greeks(current_price, K, T, r, adjusted_volatility, "call")
-        else:
-            option_price = black_scholes_put(current_price, K, T, r, adjusted_volatility)
-            greeks = calculate_greeks(current_price, K, T, r, adjusted_volatility, "put")
-        
-        # Display results in a nice layout
-        st.markdown(f"<h2 class='sub-header'>Option Analysis for {ticker} {option_type}</h2>", unsafe_allow_html=True)
-        
-        # Key metrics in cards
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f"<div class='card'><p class='metric-label'>{option_type} Price</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"<div class='card'><p class='metric-label'>Strike Price</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
-        with col3:
-            st.markdown(f"<div class='card'><p class='metric-label'>Volatilité ajustée ({days_to_expiry} jours)</p><p class='metric-value'>{adjusted_volatility*100:.3f}%</p></div>", unsafe_allow_html=True)
-        
-        # Visual elements - now with enhanced charts
-        st.markdown("<h3 class='sub-header'>Option Visualizations</h3>", unsafe_allow_html=True)
-        
-        # Payoff diagram
-        if show_payoff:
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(plot_option_payoff(current_price, K, option_price, option_type.lower()), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Price sensitivity chart
-        if show_sensitivity:
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(plot_sensitivity(current_price, K, T, r, adjusted_volatility, option_type.lower()), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Historical volatility chart
-        if show_historical_vol:
-            st.markdown("<h3 class='sub-header'>Historical Analysis</h3>", unsafe_allow_html=True)
-            
-            price_vol_chart = plot_price_and_volatility(ticker, "6mo")
-            if price_vol_chart:
-                st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-                st.plotly_chart(price_vol_chart, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+    # Colonne des résultats
+    with col_results:
+        try:
+            # Calcul du prix de l'option
+            if option_type == "Call":
+                option_price = black_scholes_call(current_price, K, T, r, sigma)
+                greeks = calculate_greeks(current_price, K, T, r, sigma, "call")
             else:
-                st.warning("Unable to generate price and volatility chart.")
-        
-        # Price and Volatility Chart (if enabled separately)
-        if show_price_vol and not show_historical_vol:
-            st.markdown("<h3 class='sub-header'>Price and Volatility Analysis</h3>", unsafe_allow_html=True)
+                option_price = black_scholes_put(current_price, K, T, r, sigma)
+                greeks = calculate_greeks(current_price, K, T, r, sigma, "put")
             
-            price_vol_chart = plot_price_and_volatility(ticker, "6mo")
-            if price_vol_chart:
-                st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-                st.plotly_chart(price_vol_chart, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-            else:
-                st.warning("Unable to generate price and volatility chart.")
-        
-        # Greeks - moved to the bottom as requested
-        if show_greeks:
-            st.markdown("<h3 class='sub-header'>Option Greeks</h3>", unsafe_allow_html=True)
-            
-            col1, col2, col3, col4, col5 = st.columns(5)
+            # Affichage des métriques clés
+            col1, col2, col3 = st.columns(3)
             with col1:
-                st.markdown(f"<div class='card'><p class='metric-label'>Delta</p><p class='metric-value'>{greeks['delta']:.4f}</p></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card'><p class='metric-label'>Prix {option_type}</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
             with col2:
-                st.markdown(f"<div class='card'><p class='metric-label'>Gamma</p><p class='metric-value'>{greeks['gamma']:.4f}</p></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card'><p class='metric-label'>Prix d'exercice</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
             with col3:
-                st.markdown(f"<div class='card'><p class='metric-label'>Theta</p><p class='metric-value'>{greeks['theta']:.4f}</p></div>", unsafe_allow_html=True)
-            with col4:
-                st.markdown(f"<div class='card'><p class='metric-label'>Vega</p><p class='metric-value'>{greeks['vega']:.4f}</p></div>", unsafe_allow_html=True)
-            with col5:
-                st.markdown(f"<div class='card'><p class='metric-label'>Rho</p><p class='metric-value'>{greeks['rho']:.4f}</p></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card'><p class='metric-label'>Jours à l'échéance</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
             
-            # Add explanations for the Greeks
-            with st.expander("What do the Greeks mean?"):
+            # Onglets pour les différentes visualisations
+            tab1, tab2 = st.tabs(["Payoff", "Greeks"])
+            
+            with tab1:
+                # Titre plus prominent pour le payoff
+                st.markdown("<h3 style='text-align: center;'>Graphique de Payoff (Profit/Perte) à l'échéance</h3>", unsafe_allow_html=True)
+                
+                # Diagramme de payoff avec acheteur et vendeur, zoomé
+                st.plotly_chart(plot_option_payoff(current_price, K, option_price, option_type.lower()), use_container_width=True)
+                
+                # Explication des payoffs
+                # Infos clés à propos du payoff (visible sans avoir à cliquer sur un expander)
                 st.markdown("""
-                - **Delta**: Measures the rate of change of the option price with respect to changes in the underlying asset's price.
-                - **Gamma**: Measures the rate of change of delta with respect to changes in the underlying price.
-                - **Theta**: Measures the rate of change of the option price with respect to time (time decay).
-                - **Vega**: Measures the rate of change of the option price with respect to changes in volatility.
-                - **Rho**: Measures the rate of change of the option price with respect to changes in the risk-free interest rate.
+                #### Points clés sur ce graphique :
+                - **Point d'équilibre** : Prix auquel l'investisseur ne gagne ni ne perd d'argent
+                - **Prix actuel** : Position actuelle de l'option (profit/perte non réalisé)
+                - **Strike** : Prix d'exercice de l'option
                 """)
-    
-    else:
-        # Comparison mode
-        st.markdown("<h2 class='sub-header'>Options Comparison</h2>", unsafe_allow_html=True)
+                
+                with st.expander("Détails sur les payoffs"):
+                    if option_type == "Call":
+                        st.markdown("""
+                        ### Call Option
+                        - **Acheteur du Call**: Profit = Max(Prix de l'action - Prix d'exercice, 0) - Prime
+                          - *Profit maximal*: Potentiellement illimité
+                          - *Perte maximale*: Prime payée
+                        - **Vendeur du Call**: Profit = Prime - Max(Prix de l'action - Prix d'exercice, 0)
+                          - *Profit maximal*: Prime reçue
+                          - *Perte maximale*: Potentiellement illimitée
+                        """)
+                    else:
+                        st.markdown("""
+                        ### Put Option
+                        - **Acheteur du Put**: Profit = Max(Prix d'exercice - Prix de l'action, 0) - Prime
+                          - *Profit maximal*: Prix d'exercice - Prime (si le prix tombe à zéro)
+                          - *Perte maximale*: Prime payée
+                        - **Vendeur du Put**: Profit = Prime - Max(Prix d'exercice - Prix de l'action, 0)
+                          - *Profit maximal*: Prime reçue
+                          - *Perte maximale*: Prix d'exercice - Prime (si le prix tombe à zéro)
+                        """)
+            
+            with tab2:
+                # Greeks
+                c1, c2, c3, c4, c5 = st.columns(5)
+                with c1:
+                    st.markdown(f"<div class='card'><p class='metric-label'>Delta</p><p class='metric-value'>{greeks['delta']:.4f}</p></div>", unsafe_allow_html=True)
+                with c2:
+                    st.markdown(f"<div class='card'><p class='metric-label'>Gamma</p><p class='metric-value'>{greeks['gamma']:.4f}</p></div>", unsafe_allow_html=True)
+                with c3:
+                    st.markdown(f"<div class='card'><p class='metric-label'>Theta</p><p class='metric-value'>{greeks['theta']:.4f}</p></div>", unsafe_allow_html=True)
+                with c4:
+                    st.markdown(f"<div class='card'><p class='metric-label'>Vega</p><p class='metric-value'>{greeks['vega']:.4f}</p></div>", unsafe_allow_html=True)
+                with c5:
+                    st.markdown(f"<div class='card'><p class='metric-label'>Rho</p><p class='metric-value'>{greeks['rho']:.4f}</p></div>", unsafe_allow_html=True)
+                
+                with st.expander("Que signifient les Greeks?"):
+                    st.markdown("""
+                    - **Delta**: Mesure le taux de changement du prix de l'option par rapport aux changements du prix de l'actif sous-jacent.
+                    - **Gamma**: Mesure le taux de changement du delta par rapport aux changements du prix sous-jacent.
+                    - **Theta**: Mesure le taux de changement du prix de l'option par rapport au temps (décroissance temporelle).
+                    - **Vega**: Mesure le taux de changement du prix de l'option par rapport aux changements de volatilité.
+                    - **Rho**: Mesure le taux de changement du prix de l'option par rapport aux changements du taux d'intérêt sans risque.
+                    """)
         
-        # Fetch data for all tickers
-        comparison_data = []
-        
-        for ticker in tickers:
-            try:
-                stock = yf.Ticker(ticker)
-                stock_info = stock.history(period="1d")
-                current_price = stock_info['Close'][0]
-                
-                # Calculate historical volatility using the new method
-                current_vol, historical_vol, _ = calculate_historical_volatility(ticker)
-                
-                # Determine strike price based on method
-                if strike_method == "ATM":
-                    K = current_price
-                elif strike_method == "Custom % OTM/ITM":
-                    K = current_price * (1 + moneyness/100)
-                else:  # Fixed Price
-                    K = fixed_strike
-                
-                # Calculate option price
-                if option_type == "Call":
-                    option_price = black_scholes_call(current_price, K, T, r, adjusted_volatility)
-                    greeks = calculate_greeks(current_price, K, T, r, adjusted_volatility, "call")
-                else:
-                    option_price = black_scholes_put(current_price, K, T, r, adjusted_volatility)
-                    greeks = calculate_greeks(current_price, K, T, r, adjusted_volatility, "put")
-                
-                # Calculate return metrics
-                option_return_pct = ((K - current_price) / option_price) * 100 if option_type == "Call" else ((current_price - K) / option_price) * 100
-                
-                # Add both daily and annualized volatility to the comparison data
-                comparison_data.append({
-                    "Ticker": ticker,
-                    "Stock Price": current_price,
-                    "Strike Price": K,
-                    f"{option_type} Price": option_price,
-                    "Delta": greeks["delta"],
-                    "Gamma": greeks["gamma"],
-                    "Theta": greeks["theta"],
-                    "Vega": greeks["vega"],
-                    "Current Volatility": current_vol * 100,
-                    "Historical Volatility": historical_vol * 100,
-                    "Potential Return %": option_return_pct if option_return_pct > 0 else 0
-                })
-                
-            except Exception as e:
-                st.error(f"Error retrieving data for {ticker}: {e}")
-        
-        # Display comparison table
-        if comparison_data:
-            comparison_df = pd.DataFrame(comparison_data)
-            st.dataframe(comparison_df.style.format({
-                "Stock Price": "${:.2f}",
-                "Strike Price": "${:.2f}",
-                f"{option_type} Price": "${:.2f}",
-                "Delta": "{:.4f}",
-                "Gamma": "{:.4f}",
-                "Theta": "{:.4f}",
-                "Vega": "{:.4f}",
-                "Current Volatility": "{:.2f}%",
-                "Historical Volatility": "{:.2f}%",
-                "Potential Return %": "{:.2f}%"
-            }), use_container_width=True)
-            
-            # Visualize comparison with enhanced charts
-            st.markdown("<h3 class='sub-header'>Visual Comparison</h3>", unsafe_allow_html=True)
-            
-            # Option price comparison
-            fig1 = px.bar(
-                comparison_df, 
-                x="Ticker", 
-                y=f"{option_type} Price",
-                title=f"{option_type} Option Prices Comparison",
-                color="Ticker",
-                text_auto='.2f',
-                height=500  # Increased height
-            )
-            fig1.update_traces(texttemplate='$%{text}', textposition='outside')
-            fig1.update_layout(
-                plot_bgcolor='rgba(240,240,240,0.5)',
-                yaxis=dict(tickprefix="$"),
-                xaxis_title="Stock Ticker",
-                yaxis_title="Option Price ($)"
-            )
-            
-            # Delta comparison
-            fig2 = px.bar(
-                comparison_df, 
-                x="Ticker", 
-                y="Delta",
-                title="Delta Comparison",
-                color="Ticker",
-                text_auto='.4f',
-                height=500  # Increased height
-            )
-            fig2.update_traces(textposition='outside')
-            fig2.update_layout(
-                plot_bgcolor='rgba(240,240,240,0.5)',
-                xaxis_title="Stock Ticker",
-                yaxis_title="Delta"
-            )
-            
-            # Display charts in containers
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(fig1, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(fig2, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Potential return comparison
-            fig3 = px.bar(
-                comparison_df, 
-                x="Ticker", 
-                y="Potential Return %",
-                title="Potential Return Comparison (if ITM at expiration)",
-                color="Ticker",
-                text_auto='.2f',
-                height=500  # Increased height
-            )
-            fig3.update_traces(texttemplate='%{text}%', textposition='outside')
-            fig3.update_layout(
-                plot_bgcolor='rgba(240,240,240,0.5)',
-                xaxis_title="Stock Ticker",
-                yaxis_title="Potential Return (%)"
-            )
-            
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(fig3, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Volatility comparison
-            fig4 = px.bar(
-                comparison_df, 
-                x="Ticker", 
-                y="Current Volatility",
-                title="Current Volatility Comparison",
-                color="Ticker",
-                text_auto='.2f',
-                height=500  # Increased height
-            )
-            fig4.update_traces(texttemplate='%{text}%', textposition='outside')
-            fig4.update_layout(
-                plot_bgcolor='rgba(240,240,240,0.5)',
-                xaxis_title="Stock Ticker",
-                yaxis_title="Current Volatility (%)"
-            )
-            
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(fig4, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Greeks comparison at the bottom
-            st.markdown("<h3 class='sub-header'>Greeks Comparison</h3>", unsafe_allow_html=True)
-            
-            # Create a melted dataframe for Greeks comparison
-            greeks_df = comparison_df[["Ticker", "Delta", "Gamma", "Theta", "Vega"]].melt(
-                id_vars=["Ticker"], 
-                var_name="Greek", 
-                value_name="Value"
-            )
-            
-            fig5 = px.bar(
-                greeks_df,
-                x="Ticker",
-                y="Value",
-                color="Greek",
-                barmode="group",
-                title="Option Greeks Comparison",
-                height=500  # Increased height
-            )
-            
-            fig5.update_layout(
-                plot_bgcolor='rgba(240,240,240,0.5)',
-                xaxis_title="Stock Ticker",
-                yaxis_title="Greek Value"
-            )
-            
-            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            st.plotly_chart(fig5, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Erreur lors des calculs: {e}")
 
 if __name__ == "__main__":
     main()
