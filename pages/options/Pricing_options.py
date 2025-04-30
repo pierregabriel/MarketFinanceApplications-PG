@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
-from curl_cffi import requests
+import curl_cffi 
 
 
 self._set_session(session or requests.Session(impersonate="chrome"))
