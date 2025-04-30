@@ -41,7 +41,7 @@ st.markdown("""
 def fetch_stock_data(ticker, period="1d"):
     """Récupère les données de cours pour un ticker donné avec mise en cache"""
     try:
-        data = yf.download(ticker, period=period, interval="1d", session = session)
+        data = yf.download(ticker, period=period, interval="1d")
         if data.empty:
             st.warning(f"Aucune donnée disponible pour {ticker}")
             return pd.DataFrame()
@@ -56,7 +56,7 @@ def fetch_historical_data(ticker):
     """Récupère les données historiques pour le calcul de volatilité"""
     try:
         # Télécharge les données des 60 derniers jours de cotation
-        data = yf.download(ticker, period="60d", interval="1d", session = session)
+        data = yf.download(ticker, period="60d", interval="1d")
         if data.empty:
             return pd.DataFrame()
         
