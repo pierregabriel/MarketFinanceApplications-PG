@@ -5,8 +5,13 @@ import pandas as pd
 from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
-import curl_cffi 
 
+# Configuration de la page
+st.set_page_config(
+    page_title="Options ",
+    page_icon="📈",
+    layout="wide"
+)
 
 # CSS pour le style
 st.markdown("""
@@ -35,47 +40,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Fonction mise en cache pour récupérer les données du cours
-@st.cache_data(ttl=300)  # Cache les données pendant 5 minutes (300 secondes)
-def fetch_stock_data(ticker, period="1d"):
-    """Récupère les données de cours pour un ticker donné avec mise en cache"""
-    try:
-        data = yf.download(ticker, period=period, interval="1d")
-        if data.empty:
-            st.warning(f"Aucune donnée disponible pour {ticker}")
-            return pd.DataFrame()
-        return data
-    except Exception as e:
-        st.warning(f"Erreur lors de la récupération des données pour {ticker}: {e}")
-        return pd.DataFrame()
-
-# Fonction mise en cache pour calculer la volatilité historique
-@st.cache_data(ttl=600)  # Cache les données pendant 10 minutes (600 secondes)
-def fetch_historical_data(ticker):
-    """Récupère les données historiques pour le calcul de volatilité"""
-    try:
-        # Télécharge les données des 60 derniers jours de cotation
-        data = yf.download(ticker, period="60d", interval="1d")
-        if data.empty:
-            return pd.DataFrame()
-        
-        # Calcul des rendements journaliers
-        data['Returns'] = data['Close'].pct_change().fillna(0)
-        return data
-    except Exception as e:
-        st.warning(f"Erreur lors de la récupération des données historiques pour {ticker}: {e}")
-        return pd.DataFrame()
-
-# Fonction pour calculer la volatilité historique
-def calculate_volatility(ticker):
-    data = fetch_historical_data(ticker)
-    if data.empty:
-        return 0.3  # Valeur par défaut si aucune donnée n'est disponible
-    
-    # Écart-type des rendements * racine de 252 (jours de trading par an)
-    volatility = data['Returns'].std() * np.sqrt(252)
-    return volatility
 
 # Fonctions de calcul Black-Scholes
 def black_scholes_call(S, K, T, r, sigma):
@@ -133,6 +97,24 @@ def calculate_greeks(S, K, T, r, sigma, option_type="call"):
         "vega": vega / 100,    # Pour un changement de 1% de volatilité
         "rho": rho / 100       # Pour un changement de 1% de taux d'intérêt
     }
+
+# Fonction pour calculer la volatilité historique
+def calculate_volatility(ticker):
+    try:
+        # Télécharge les données des 60 derniers jours de cotation
+        data = yf.download(ticker, period="60d", interval="1d")
+        if data.empty:
+            return 0.3  # Valeur par défaut si aucune donnée n'est disponible
+        
+        # Calcul des rendements journaliers
+        data['Returns'] = data['Close'].pct_change().fillna(0)
+        
+        # Écart-type des rendements * racine de 252 (jours de trading par an)
+        # pour annualiser la volatilité
+        volatility = data['Returns'].std() * np.sqrt(252)
+        return volatility
+    except:
+        return 0.3  # Valeur par défaut en cas d'erreur
 
 # Diagramme de payoff mis à jour pour afficher acheteur et vendeur avec zoom sur point d'équilibre
 def plot_option_payoff(S, K, premium, option_type="call"):
@@ -276,18 +258,7 @@ def plot_option_payoff(S, K, premium, option_type="call"):
     
     return fig
 
-# Fonction pour afficher un message d'erreur en cas de problème avec l'API
-def handle_api_error():
-    st.error("""
-    ### Erreur de connexion à l'API Yahoo Finance
-    
-    Nous rencontrons des difficultés pour accéder aux données financières. 
-    
-    **Solutions possibles:**
-    - Réessayez dans quelques instants
-    - Utilisez un autre ticker (certains peuvent avoir moins de restrictions)
-    - Continuez à utiliser l'application avec les valeurs actuelles
-    """)
+# La fonction plot_sensitivity a été retirée car l'onglet correspondant a été supprimé
 
 # Application principale
 def main():
@@ -313,88 +284,58 @@ def main():
         ticker = st.text_input('Symbole de l\'action', 'AAPL').upper()
         
         try:
-            # Récupération des données avec mise en cache
-            stock_info = fetch_stock_data(ticker)
+            # Récupération des données
+            stock = yf.Ticker(ticker)
+            stock_info = stock.history(period="1d")
+            current_price = stock_info['Close'][0]
             
-            if not stock_info.empty:
-                current_price = stock_info['Close'].iloc[-1]  # Utiliser le dernier prix disponible
-                
-                st.markdown(f"<p class='metric-label'>Prix actuel</p><p class='metric-value'>${current_price:.2f}</p>", unsafe_allow_html=True)
-                
-                # Période d'expiration
-                expiry_options = {
-                    "15 Jours": 15,
-                    "1 Mois": 30,
-                    "2 Mois": 60,
-                    "3 Mois": 90,
-                    "6 Mois": 180,
-                    "1 An": 365
-                }
-                
-                selected_period = st.selectbox("Période d'expiration", list(expiry_options.keys()))
-                days_to_expiry = expiry_options[selected_period]
-                
-                # Calcul de la date d'expiration et du temps jusqu'à l'expiration en années
-                T = days_to_expiry / 365.0
-                
-                # Prix d'exercice
-                strike_method = st.radio("Méthode de prix d'exercice", ["ATM", "Personnalisé"])
-                
-                if strike_method == "ATM":
-                    K = current_price
-                else:
-                    K = st.number_input('Prix d\'exercice (K)', value=float(current_price), min_value=0.01)
-                
-                # Volatilité avec mise en cache
-                volatility = calculate_volatility(ticker)
-                sigma = st.slider("Volatilité (σ) %", min_value=1.0, max_value=100.0, value=float(volatility * 100), step=0.1) / 100
-                
-                st.info(f"""
-                **Calcul de la volatilité**: La volatilité historique est calculée sur les 60 derniers jours de trading.
-                Elle représente l'écart-type annualisé des rendements journaliers de l'action (×√252).
-                Valeur calculée pour {ticker}: **{volatility*100:.2f}%**
-                """, icon="ℹ️")
-                
-                # Taux d'intérêt
-                r = st.slider("Taux sans risque (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
-                st.info("""
-    Le **taux sans risque** représente le rendement d'un investissement sans risque sur la durée de l'option.
-    Généralement, on utilise le rendement des **obligations d'État** de maturité similaire et dans la devise de l'option.
-    Pour une évaluation précise, consultez les données actuelles des rendements obligataires.
-    """)
-                
-                # Afficher le statut du cache
-                with st.expander("Informations sur la mise en cache"):
-                    st.info("""
-                    **Données mises en cache pour éviter les erreurs "Too Many Requests"**
-                    
-                    - Prix actuels: Mis en cache pendant 5 minutes
-                    - Données historiques pour la volatilité: Mises en cache pendant 10 minutes
-                    
-                    Cette mise en cache permet de réduire le nombre d'appels à l'API Yahoo Finance et améliore les performances de l'application.
-                    """)
-            else:
-                # En cas d'erreur de récupération des données
-                handle_api_error()
-                # Utiliser des valeurs par défaut pour permettre à l'application de fonctionner
-                current_price = 100.0
-                T = 30 / 365.0
+            st.markdown(f"<p class='metric-label'>Prix actuel</p><p class='metric-value'>${current_price:.2f}</p>", unsafe_allow_html=True)
+            
+            # Période d'expiration
+            expiry_options = {
+                "15 Jours": 15,
+                "1 Mois": 30,
+                "2 Mois": 60,
+                "3 Mois": 90,
+                "6 Mois": 180,
+                "1 An": 365
+            }
+            
+            selected_period = st.selectbox("Période d'expiration", list(expiry_options.keys()))
+            days_to_expiry = expiry_options[selected_period]
+            
+            # Calcul de la date d'expiration et du temps jusqu'à l'expiration en années
+            T = days_to_expiry / 365.0
+            
+            # Prix d'exercice
+            strike_method = st.radio("Méthode de prix d'exercice", ["ATM", "Personnalisé"])
+            
+            if strike_method == "ATM":
                 K = current_price
-                sigma = 0.3
-                r = 0.05
-                days_to_expiry = 30
-                st.warning("Utilisation de valeurs par défaut pour les démonstrations")
-                
+            else:
+                K = st.number_input('Prix d\'exercice (K)', value=float(current_price), min_value=0.01)
+            
+            # Volatilité
+            volatility = calculate_volatility(ticker)
+            sigma = st.slider("Volatilité (σ) %", min_value=1.0, max_value=100.0, value=float(volatility * 100), step=0.1) / 100
+            
+            st.info(f"""
+            **Calcul de la volatilité**: La volatilité historique est calculée sur les 60 derniers jours de trading.
+            Elle représente l'écart-type annualisé des rendements journaliers de l'action (×√252).
+            Valeur calculée pour {ticker}: **{volatility*100:.2f}%**
+            """, icon="ℹ️")
+            
+            # Taux d'intérêt
+            r = st.slider("Taux sans risque (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
+            st.info("""
+Le **taux sans risque** représente le rendement d'un investissement sans risque sur la durée de l'option.
+Généralement, on utilise le rendement des **obligations d'État** de maturité similaire et dans la devise de l'option.
+Pour une évaluation précise, consultez les données actuelles des rendements obligataires.
+""")
+            
         except Exception as e:
             st.error(f"Erreur lors de la récupération des données pour {ticker}: {e}")
-            # Utiliser des valeurs par défaut pour permettre à l'application de fonctionner
-            current_price = 100.0
-            T = 30 / 365.0
-            K = current_price
-            sigma = 0.3
-            r = 0.05
-            days_to_expiry = 30
-            st.warning("Utilisation de valeurs par défaut pour les démonstrations")
+            st.stop()
             
         st.markdown('</div>', unsafe_allow_html=True)
     
