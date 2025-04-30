@@ -6,13 +6,6 @@ from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Options ",
-    page_icon="📈",
-    layout="wide"
-)
-
 # CSS pour le style
 st.markdown("""
 <style>
