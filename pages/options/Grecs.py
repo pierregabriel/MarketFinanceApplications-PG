@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-st.set_page_config(layout="wide", page_title="Option Greeks Visualizer")
 
 # CSS to improve the app appearance
 st.markdown("""
