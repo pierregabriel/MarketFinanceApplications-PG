@@ -5,9 +5,7 @@ import pandas as pd
 from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
-import time
 
-time.sleep(5)
 # CSS pour le style
 st.markdown("""
 <style>
