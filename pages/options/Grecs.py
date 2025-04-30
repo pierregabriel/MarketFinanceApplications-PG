@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+st.set_page_config(layout="wide", page_title="Option Greeks Visualizer")
 
 # CSS to improve the app appearance
 st.markdown("""
@@ -127,9 +128,27 @@ st.sidebar.markdown('<div class="sub-header">Option Parameters</div>', unsafe_al
 option_type = st.sidebar.selectbox("Option Type", ["Call", "Put"])
 S0 = st.sidebar.number_input("Current Stock Price ($)", min_value=1.0, max_value=1000.0, value=100.0, step=1.0)
 K = st.sidebar.number_input("Strike Price ($)", min_value=1.0, max_value=1000.0, value=100.0, step=1.0)
-T = st.sidebar.slider("Time to Expiration (years)", min_value=0.01, max_value=2.0, value=1.0, step=0.01)
+T = st.sidebar.radio(
+    "Maturité type",
+    options=[
+        "0DTE (0 jour)", 
+        "Weekly (7j)", 
+        "Monthly (30j)", 
+        "Quarterly (90j)", 
+        "LEAPs (1-3ans)"])
+if T == "0DTE (0 jour)":
+    T = 0.0
+elif T == "Weekly (7j)":
+    T = 7/365.25
+elif T == "Monthly (30j)":
+    T = 30/365.25
+elif T == "Quarterly (90j)":
+    T = 90/365.25
+elif T == "LEAPs (1-3ans)":
+    T = st.sidebar.slider("Sélectionnez la durée exacte pour LEAPs (années)", min_value=1.0, max_value=3.0, value=1.0, step=0.1)
 r = st.sidebar.slider("Risk-free Rate (%)", min_value=0.0, max_value=10.0, value=2.0, step=0.1) / 100
 sigma = st.sidebar.slider("Volatility (%)", min_value=1.0, max_value=100.0, value=20.0, step=1.0) / 100
+
 
 # Price range for visualization
 price_range = st.sidebar.slider("Stock Price Range for Visualization (%)", min_value=50, max_value=200, value=(70, 130), step=5)
