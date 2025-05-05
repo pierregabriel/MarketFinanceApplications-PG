@@ -230,20 +230,20 @@ def plot_option_payoff(S, K, premium, option_type="call"):
         yshift=10
     )
     fig.update_layout(
-    title=f"",  # <-- C'est ici que le titre est défini
-    xaxis_title="Stock Price at Expiration",
-    yaxis_title="Profit/Loss ($)",
-    height=500,
-    margin=dict(l=20, r=20, t=50, b=20),
-    plot_bgcolor='rgba(240,240,240,0.5)',
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1
+        title=f"",
+        xaxis_title="Stock Price at Expiration",
+        yaxis_title="Profit/Loss ($)",
+        height=500,
+        margin=dict(l=20, r=20, t=50, b=20),
+        plot_bgcolor='rgba(240,240,240,0.5)',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
-)
     
     fig.update_xaxes(tickprefix="$")
     fig.update_yaxes(tickprefix="$")
@@ -282,8 +282,6 @@ A complete Black-Scholes calculator for option pricing, payoff visualization, an
             stock_info = stock.history(period="1d")
             current_price = stock_info['Close'][0]
             
-            st.markdown(f"<p class='metric-label'>Current Price</p><p class='metric-value'>${current_price:.2f}</p>", unsafe_allow_html=True)
-            
             # Expiration period
             expiry_options = {
                 "15 Days": 15,
@@ -300,12 +298,25 @@ A complete Black-Scholes calculator for option pricing, payoff visualization, an
             # Calculate expiration date and time to expiration in years
             T = days_to_expiry / 365.0
             
-            # Strike price
-            strike_method = st.radio("Strike Price Method", ["ATM", "Custom"])
+            # Enhanced Strike Price Selection
+            strike_method = st.radio("Strike Price Method", ["ATM", "OTM", "ITM", "Custom"])
             
             if strike_method == "ATM":
                 K = current_price
+            elif strike_method == "OTM":
+                # Out of the money
+                if option_type == "Call":
+                    K = current_price * 1.05  # 5% above current price
+                else:
+                    K = current_price * 0.95  # 5% below current price
+            elif strike_method == "ITM":
+                # In the money
+                if option_type == "Call":
+                    K = current_price * 0.95  # 5% below current price
+                else:
+                    K = current_price * 1.05  # 5% above current price
             else:
+                # Custom strike price
                 K = st.number_input('Strike Price (K)', value=float(current_price), min_value=0.01)
             
             # Volatility
@@ -343,14 +354,40 @@ For accurate valuation, check current bond yield data.
                 option_price = black_scholes_put(current_price, K, T, r, sigma)
                 greeks = calculate_greeks(current_price, K, T, r, sigma, "put")
             
-            # Display key metrics
-            col1, col2, col3 = st.columns(3)
+            # Display key metrics - Now including current price in the right column
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.markdown(f"<div class='card'><p class='metric-label'>{option_type} Price</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card'><p class='metric-label'>Current Price</p><p class='metric-value'>${current_price:.2f}</p></div>", unsafe_allow_html=True)
             with col2:
-                st.markdown(f"<div class='card'><p class='metric-label'>Strike Price</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card'><p class='metric-label'>{option_type} Price</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
             with col3:
+                st.markdown(f"<div class='card'><p class='metric-label'>Strike Price</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
+            with col4:
                 st.markdown(f"<div class='card'><p class='metric-label'>Days to Expiry</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
+            
+            # Additional strike price adjustment in the results column
+            with st.expander("Fine-tune Strike Price"):
+                strike_adjustment = st.slider(
+                    "Adjust Strike Price", 
+                    min_value=current_price * 0.5, 
+                    max_value=current_price * 1.5, 
+                    value=K,
+                    step=0.01
+                )
+                
+                if strike_adjustment != K:
+                    K = strike_adjustment
+                    # Recalculate option price with new strike
+                    if option_type == "Call":
+                        option_price = black_scholes_call(current_price, K, T, r, sigma)
+                        greeks = calculate_greeks(current_price, K, T, r, sigma, "call")
+                    else:
+                        option_price = black_scholes_put(current_price, K, T, r, sigma)
+                        greeks = calculate_greeks(current_price, K, T, r, sigma, "put")
+                    
+                    # Update the displayed metrics
+                    st.markdown(f"<div class='card'><p class='metric-label'>Updated {option_type} Price</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='card'><p class='metric-label'>Updated Strike Price</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
             
             # Tabs for different visualizations
             tab1, tab2, = st.tabs(["Payoff", "Greeks"])
