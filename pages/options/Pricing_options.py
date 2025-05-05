@@ -353,7 +353,7 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
                 st.markdown(f"<div class='card'><p class='metric-label'>Jours à l'échéance</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
             
             # Onglets pour les différentes visualisations
-            tab1, tab2, tabs3= st.tabs(["Payoff", "Greeks", "test"])
+            tab1, tab2, tab3= st.tabs(["Payoff", "Greeks", "test"])
             
             with tab1:
                 # Titre plus prominent pour le payoff
