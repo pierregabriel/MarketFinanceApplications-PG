@@ -461,4 +461,13 @@ with st.expander("Trading Strategies Based on Greeks"):
 
 # Footer
 st.markdown("---")
-st.markdown("Created with Streamlit • Option pricing based on Black-Scholes model")
+st.markdown(
+        """
+        <div style="text-align: center;">
+            <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
+                PGB
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
