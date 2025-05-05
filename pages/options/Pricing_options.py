@@ -417,8 +417,8 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
                     """)
                     # Afficher un petit message de bas de page
             with tab3:
-            st.markdown("---")
-            st.markdown(
+                st.markdown("---")
+                st.markdown(
     """
     <div style="text-align: center;">
         <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
