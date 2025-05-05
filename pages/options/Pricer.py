@@ -253,7 +253,7 @@ def plot_option_payoff(S, K, premium, option_type="call"):
 # Main application
 def main():
     st.markdown("""
-<h1 class="main-header" style="font-size: 2.5rem;">Options Calculator</h1>
+<h1 style="font-size: 2.5rem; font-weight: 700; color: #1E88E5; text-align: center; margin-bottom: 1rem;">Options Calculator</h1>
 """, unsafe_allow_html=True)
     
     # Layout in 2 columns: left for inputs, right for results
