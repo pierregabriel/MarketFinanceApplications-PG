@@ -6,9 +6,9 @@ st.set_page_config(
 )
 
 page_dict = {
-    "Homepage 🏠": [st.Page("pages/Page_Accueil.py", title="Homepage")],
-    "FX": [st.Page("pages/FX/FX.py", title="Marché FX", icon="💱")],
-    "Options": [
+    "🏠 Homepage": [st.Page("pages/Page_Accueil.py", title="Homepage")],
+    "💱 FX": [st.Page("pages/FX/FX.py", title="Marché FX")],
+    "📉📈 Options": [
         st.Page("pages/options/Grecs.py", title="Greeks Visualizer"),
         st.Page("pages/options/Pricing_options.py", title="Pricer"),
         st.Page("pages/options/Stratégie_options.py", title="Strategies")
