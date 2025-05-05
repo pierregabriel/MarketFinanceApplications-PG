@@ -415,6 +415,19 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
                     - **Vega**: Mesure le taux de changement du prix de l'option par rapport aux changements de volatilité.
                     - **Rho**: Mesure le taux de changement du prix de l'option par rapport aux changements du taux d'intérêt sans risque.
                     """)
+
+        # Afficher un petit message de bas de page
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
+            PGB
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
         
         except Exception as e:
             st.error(f"Erreur lors des calculs: {e}")
