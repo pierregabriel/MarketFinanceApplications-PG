@@ -6,7 +6,7 @@ st.set_page_config(
 )
 
 page_dict = {
-    "Accueil": [st.Page("pages/Page_Accueil.py", title="Accueil", icon="🏠")],
+    "Homepage 🏠": [st.Page("pages/Page_Accueil.py", title="Homepage")],
     "FX": [st.Page("pages/FX/FX.py", title="Marché FX", icon="💱")],
     "Options": [
         st.Page("pages/options/Grecs.py", title="Greeks Visualizer"),
