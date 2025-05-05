@@ -301,7 +301,7 @@ def find_break_even_points(strategy: Strategy) -> List[float]:
     return break_even_points
 
 # Title and description
-st.title("Options Strategy Visualizer for Interviews")
+st.title("Options Strategy Visualizer")
 st.markdown("""
     This application helps you visualize risk/reward profiles and understand the characteristics behind options strategies.
 """)
