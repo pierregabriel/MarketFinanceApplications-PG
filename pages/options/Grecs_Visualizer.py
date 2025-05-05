@@ -134,7 +134,7 @@ T = st.sidebar.radio(
         "Weekly (7j)", 
         "Monthly (30j)", 
         "Quarterly (90j)", 
-        "LEAPs (1-3ans)"])
+        "LEAPs (1-3ans)"], index=1)
 if T == "0DTE (0 jour)":
     T = 0.0
 elif T == "Weekly (7j)":
