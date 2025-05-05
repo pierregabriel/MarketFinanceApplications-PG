@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from dataclasses import dataclass
 from typing import List, Optional, Literal, Dict, Tuple, Union
 
-# Définition des types
+# Definition of types
 @dataclass
 class StrategyOption:
     type: Literal["call", "put", "stock"]
@@ -20,7 +20,7 @@ class Strategy:
     name: str
     description: str
     legs: List[StrategyOption]
-    interview_notes: str  # Notes spécifiques pour les entretiens
+    interview_notes: str  # Specific notes for interviews
     max_profit: Optional[float] = None
     max_loss: Optional[float] = None
     break_even_points: Optional[List[float]] = None
@@ -29,118 +29,118 @@ STRATEGIES = [
     Strategy(
         id="long-call",
         name="Long Call",
-        description="Achat d'une option d'achat qui donne le droit, mais non l'obligation, d'acheter l'actif sous-jacent au prix d'exercice. Stratégie haussière avec un potentiel de gain illimité et une perte limitée à la prime payée.",
+        description="Buying a call option that gives the right, but not the obligation, to buy the underlying asset at the strike price. Bullish strategy with unlimited profit potential and limited loss to the premium paid.",
         legs=[
             StrategyOption(type="call", strike=100, premium=5, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Profiter d'une hausse marquée du sous-jacent avec un investissement initial limité au montant de la prime."
+        interview_notes="Objective: Profit from a significant rise in the underlying with limited initial investment equal to the premium."
     ),
     Strategy(
         id="long-put",
         name="Long Put",
-        description="Achat d'une option de vente qui donne le droit, mais non l'obligation, de vendre l'actif sous-jacent au prix d'exercice. Stratégie baissière avec un potentiel de gain limité au prix d'exercice moins la prime, et une perte limitée à la prime payée.",
+        description="Buying a put option that gives the right, but not the obligation, to sell the underlying asset at the strike price. Bearish strategy with profit limited to the strike price minus the premium, and loss limited to the premium paid.",
         legs=[
             StrategyOption(type="put", strike=100, premium=5, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Se protéger ou tirer profit d'une baisse importante du sous-jacent."
+        interview_notes="Objective: Hedge or profit from a significant decline in the underlying."
     ),
     Strategy(
         id="short-call",
         name="Short Call",
-        description="Vente d'une option d'achat qui oblige à vendre l'actif sous-jacent au prix d'exercice si l'option est exercée. Stratégie baissière ou neutre avec un gain limité à la prime reçue et un risque potentiellement illimité.",
+        description="Selling a call option that obligates to sell the underlying asset at the strike price if exercised. Bearish or neutral strategy with limited profit to the premium received and potentially unlimited risk.",
         legs=[
             StrategyOption(type="call", strike=100, premium=5, quantity=1, position="short")
         ],
-        interview_notes="Objectif : Générer un revenu en anticipant une stagnation ou une baisse du sous-jacent."
+        interview_notes="Objective: Generate income by anticipating stagnant or declining prices."
     ),
     Strategy(
         id="short-put",
         name="Short Put",
-        description="Vente d'une option de vente qui oblige à acheter l'actif sous-jacent au prix d'exercice si l'option est exercée. Stratégie haussière ou neutre avec un gain limité à la prime reçue et un risque limité au prix d'exercice moins la prime.",
+        description="Selling a put option that obligates to buy the underlying asset at the strike price if exercised. Bullish or neutral strategy with limited profit to the premium received and limited risk to the strike price minus the premium.",
         legs=[
             StrategyOption(type="put", strike=100, premium=5, quantity=1, position="short")
         ],
-        interview_notes="Objectif : Générer un revenu avec une probabilité élevée de succès tout en étant prêt à acheter le sous-jacent à un prix jugé attractif."
+        interview_notes="Objective: Generate income with high probability of success while being willing to buy the underlying at an attractive price."
     ),
     Strategy(
         id="covered-call",
         name="Covered Call",
-        description="Combinaison de la détention de l'actif sous-jacent et de la vente d'une option d'achat. Cette stratégie génère un revenu supplémentaire sur une position longue existante, mais limite le potentiel de hausse en échange d'une prime immédiate qui peut compenser partiellement les pertes en cas de baisse.",
+        description="Combination of owning the underlying asset and selling a call option. This strategy generates additional income on an existing long position but caps the upside potential in exchange for immediate premium that can partially offset losses if the price declines.",
         legs=[
             StrategyOption(type="stock", strike=100, premium=100, quantity=100, position="long"),
             StrategyOption(type="call", strike=105, premium=3, quantity=1, position="short")
         ],
-        interview_notes="Objectif : Augmenter le rendement d’une position acheteuse existante tout en acceptant de limiter le potentiel de hausse."
+        interview_notes="Objective: Enhance returns on an existing long position while accepting limited upside potential."
     ),
     Strategy(
         id="bull-call-spread",
         name="Bull Call Spread",
-        description="Stratégie haussière qui consiste à acheter un call et à vendre un call avec un strike plus élevé. Réduit le coût mais limite aussi le profit potentiel.",
+        description="Bullish strategy that involves buying a call and selling a call with a higher strike. Reduces cost but also limits potential profit.",
         legs=[
             StrategyOption(type="call", strike=95, premium=8, quantity=1, position="long"),
             StrategyOption(type="call", strike=105, premium=3, quantity=1, position="short")
         ],
-        interview_notes="Objectif : Profiter d’une hausse modérée tout en maîtrisant le coût de l’investissement."
+        interview_notes="Objective: Profit from moderate upside while controlling investment cost."
     ),
     Strategy(
         id="bear-put-spread",
         name="Bear Put Spread",
-        description="Stratégie baissière qui consiste à acheter un put et à vendre un put avec un strike plus bas. Réduit le coût mais limite aussi le profit potentiel.",
+        description="Bearish strategy that involves buying a put and selling a put with a lower strike. Reduces cost but also limits potential profit.",
         legs=[
             StrategyOption(type="put", strike=105, premium=8, quantity=1, position="long"),
             StrategyOption(type="put", strike=95, premium=3, quantity=1, position="short")
         ],
-        interview_notes="Objectif : Tirer parti d’une baisse modérée tout en réduisant le coût de la position."
+        interview_notes="Objective: Profit from moderate downside while reducing position cost."
     ),
     Strategy(
         id="long-straddle",
         name="Long Straddle",
-        description="Achat simultané d'un call et d'un put au même strike. Profite d'une forte volatilité dans n'importe quelle direction.",
+        description="Simultaneous purchase of a call and put at the same strike. Profits from high volatility in either direction.",
         legs=[
             StrategyOption(type="call", strike=100, premium=5, quantity=1, position="long"),
             StrategyOption(type="put", strike=100, premium=5, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Capitaliser sur un mouvement de prix significatif, peu importe sa direction."
+        interview_notes="Objective: Capitalize on significant price movement in either direction."
     ),
     Strategy(
         id="long-strangle",
         name="Long Strangle",
-        description="Achat d'un call avec un strike élevé et d'un put avec un strike bas. Moins cher qu'un straddle mais nécessite un mouvement plus important du prix pour être profitable.",
+        description="Purchase of a call with a high strike and a put with a low strike. Cheaper than a straddle but requires larger price movement to be profitable.",
         legs=[
             StrategyOption(type="call", strike=105, premium=3, quantity=1, position="long"),
             StrategyOption(type="put", strike=95, premium=3, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Profiter d’une forte volatilité avec un coût d’entrée plus faible que le straddle."
+        interview_notes="Objective: Profit from high volatility with lower cost than a straddle."
     ),
     Strategy(
         id="butterfly",
         name="Call Butterfly",
-        description="Combinaison de spreads bull et bear call qui profite lorsque le prix reste proche du strike du milieu à l'expiration. Risque limité avec profit potentiel modéré.",
+        description="Combination of bull and bear call spreads that profits when the price stays close to the middle strike at expiration. Limited risk with moderate profit potential.",
         legs=[
             StrategyOption(type="call", strike=90, premium=10, quantity=1, position="long"),
             StrategyOption(type="call", strike=100, premium=5, quantity=2, position="short"),
             StrategyOption(type="call", strike=110, premium=2, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Maximiser le gain dans un marché peu volatil, avec un prix stable autour du strike central."
+        interview_notes="Objective: Maximize gain in low volatility markets with prices stable around the central strike."
     ),
     Strategy(
         id="iron-condor",
         name="Iron Condor",
-        description="Combinaison de spreads bull put et bear call. Profite lorsque le prix reste dans une fourchette donnée. Risque limité avec profit potentiel modéré.",
+        description="Combination of bull put and bear call spreads. Profits when the price stays within a given range. Limited risk with moderate profit potential.",
         legs=[
             StrategyOption(type="put", strike=90, premium=2, quantity=1, position="short"),
             StrategyOption(type="put", strike=85, premium=1, quantity=1, position="long"),
             StrategyOption(type="call", strike=110, premium=2, quantity=1, position="short"),
             StrategyOption(type="call", strike=115, premium=1, quantity=1, position="long")
         ],
-        interview_notes="Objectif : Générer un revenu stable dans des conditions de marché calmes, en pariant sur une faible volatilité."
+        interview_notes="Objective: Generate stable income in calm market conditions by betting on low volatility."
     )
 ]
 
 
-# Fonctions de calcul
+# Calculation functions
 def calculate_intrinsic_value(option: StrategyOption, underlying_price: float) -> float:
-    """Calcule la valeur intrinsèque d'une option"""
+    """Calculates the intrinsic value of an option"""
     if option.type == "stock":
         return underlying_price - option.strike
     elif option.type == "call":
@@ -149,7 +149,7 @@ def calculate_intrinsic_value(option: StrategyOption, underlying_price: float) -
         return max(0, option.strike - underlying_price)
 
 def calculate_option_pl(option: StrategyOption, underlying_price: float) -> float:
-    """Calcule le profit/perte pour une option individuelle à un prix donné"""
+    """Calculates the profit/loss for an individual option at a given price"""
     if option.type == "stock":
         pl = (underlying_price - option.premium) * option.quantity
         return pl if option.position == "long" else -pl
@@ -162,26 +162,26 @@ def calculate_option_pl(option: StrategyOption, underlying_price: float) -> floa
         return (option.premium - intrinsic) * option.quantity
 
 def calculate_profit_loss(strategy: Strategy, underlying_price: float) -> float:
-    """Calcule le profit/perte total pour une stratégie à un prix donné"""
+    """Calculates the total profit/loss for a strategy at a given price"""
     return sum(calculate_option_pl(leg, underlying_price) for leg in strategy.legs)
 
 def get_directionality(strategy: Strategy) -> str:
-    """Détermine la directionnalité de la stratégie"""
+    """Determines the strategy's directionality"""
     id = strategy.id
     
     if id == "long-call" or id == "short-put" or id == "covered-call" or "bull" in id:
-        return "Haussière"
+        return "Bullish"
     elif id == "long-put" or id == "short-call" or "bear" in id:
-        return "Baissière"
+        return "Bearish"
     elif id == "long-straddle" or id == "long-strangle":
-        return "Forte volatilité (haussière ou baissière)"
+        return "High volatility (bullish or bearish)"
     elif id == "butterfly" or id == "iron-condor":
-        return "Neutre (faible volatilité)"
+        return "Neutral (low volatility)"
     
     return "Variable"
 
 def get_risk(strategy: Strategy) -> str:
-    """Détermine le risque maximum de la stratégie"""
+    """Determines the strategy's maximum risk"""
     id = strategy.id
     total_premium = sum(
         -leg.premium * leg.quantity if leg.position == "long" else leg.premium * leg.quantity
@@ -189,21 +189,21 @@ def get_risk(strategy: Strategy) -> str:
     )
     
     if id == "long-call" or id == "long-put" or id == "long-straddle" or id == "long-strangle":
-        return f"Limité à {abs(total_premium):.2f}"
+        return f"Limited to {abs(total_premium):.2f}"
     elif id == "short-call":
-        return "Illimité"
+        return "Unlimited"
     elif id == "short-put":
-        return f"Limité à {(strategy.legs[0].strike - strategy.legs[0].premium):.2f}"
+        return f"Limited to {(strategy.legs[0].strike - strategy.legs[0].premium):.2f}"
     elif id == "covered-call":
         stock_cost = strategy.legs[0].premium * strategy.legs[0].quantity / 100
-        return f"Limité à {stock_cost - strategy.legs[1].premium:.2f}"
+        return f"Limited to {stock_cost - strategy.legs[1].premium:.2f}"
     elif "spread" in id or id == "butterfly" or id == "iron-condor":
-        return f"Limité à {abs(total_premium):.2f}"
+        return f"Limited to {abs(total_premium):.2f}"
     
     return "Variable"
 
 def get_profit(strategy: Strategy) -> str:
-    """Détermine le profit maximum de la stratégie"""
+    """Determines the strategy's maximum profit"""
     id = strategy.id
     total_premium = sum(
         -leg.premium * leg.quantity if leg.position == "long" else leg.premium * leg.quantity
@@ -211,69 +211,69 @@ def get_profit(strategy: Strategy) -> str:
     )
     
     if id == "long-call" or id == "long-straddle" or id == "long-strangle":
-        return "Potentiellement illimité"
+        return "Potentially unlimited"
     elif id == "long-put":
-        return f"Limité à {(strategy.legs[0].strike - abs(total_premium)):.2f}"
+        return f"Limited to {(strategy.legs[0].strike - abs(total_premium)):.2f}"
     elif id == "short-call" or id == "short-put":
-        return f"Limité à {abs(total_premium):.2f}"
+        return f"Limited to {abs(total_premium):.2f}"
     elif id == "covered-call":
         stock_leg = strategy.legs[0]
         call_leg = strategy.legs[1]
-        return f"Limité à {(call_leg.strike - stock_leg.premium + call_leg.premium):.2f}"
+        return f"Limited to {(call_leg.strike - stock_leg.premium + call_leg.premium):.2f}"
     elif id == "iron-condor" or "spread" in id:
-        return f"Limité à {abs(total_premium):.2f}"
+        return f"Limited to {abs(total_premium):.2f}"
     
     return "Variable"
 
 def get_best_case(strategy: Strategy) -> str:
-    """Détermine le meilleur scénario pour la stratégie"""
+    """Determines the best case scenario for the strategy"""
     id = strategy.id
     
     if id == "long-call" or "bull" in id:
-        return "Hausse significative du prix"
+        return "Significant price increase"
     elif id == "long-put" or "bear" in id:
-        return "Baisse significative du prix"
+        return "Significant price decrease"
     elif id == "short-call":
-        return "Prix reste en dessous du strike"
+        return "Price stays below strike"
     elif id == "short-put":
-        return "Prix reste au-dessus du strike"
+        return "Price stays above strike"
     elif id == "covered-call":
-        return "Prix monte jusqu'au strike du call vendu"
+        return "Price rises to call's strike price"
     elif id == "butterfly" or id == "iron-condor":
-        return "Prix stable près du centre de la stratégie"
+        return "Price stable near strategy center"
     elif id == "long-straddle" or id == "long-strangle":
-        return "Mouvement important du prix dans n'importe quelle direction"
+        return "Large price movement in either direction"
     
     return "Variable"
 
 def get_worst_case(strategy: Strategy) -> str:
-    """Détermine le pire scénario pour la stratégie"""
+    """Determines the worst case scenario for the strategy"""
     id = strategy.id
     
     if id == "long-call":
-        return "Prix reste en dessous du strike"
+        return "Price stays below strike"
     elif id == "long-put":
-        return "Prix reste au-dessus du strike"
+        return "Price stays above strike"
     elif id == "short-call":
-        return "Hausse significative du prix"
+        return "Significant price increase"
     elif id == "short-put":
-        return "Baisse significative du prix"
+        return "Significant price decrease"
     elif id == "covered-call":
-        return "Baisse significative du prix"
+        return "Significant price decrease"
     elif "bear" in id:
-        return "Prix stable ou en hausse"
+        return "Price stable or rising"
     elif "bull" in id:
-        return "Prix stable ou en baisse"
+        return "Price stable or falling"
     elif id == "butterfly" or id == "iron-condor":
-        return "Fort mouvement du prix dans n'importe quelle direction"
+        return "Large price movement in either direction"
     elif id == "long-straddle" or id == "long-strangle":
-        return "Prix stable"
+        return "Price remains stable"
     
     return "Variable"
 
 def find_break_even_points(strategy: Strategy) -> List[float]:
-    """Trouve les points d'équilibre approximatifs pour la stratégie"""
-    # Génère une plage de prix pour chercher les points d'équilibre
+    """Finds approximate break-even points for the strategy"""
+    # Generate price range to search for break-even points
     min_strike = min([leg.strike for leg in strategy.legs if leg.type != "stock"], default=100)
     max_strike = max([leg.strike for leg in strategy.legs if leg.type != "stock"], default=100)
     range_width = max(50, max_strike - min_strike + 20)
@@ -282,52 +282,52 @@ def find_break_even_points(strategy: Strategy) -> List[float]:
     max_price = max_strike + range_width/2
     price_points = np.linspace(min_price, max_price, 1000)
     
-    # Calcule le P&L pour chaque point de prix
+    # Calculate P&L for each price point
     pls = [calculate_profit_loss(strategy, price) for price in price_points]
     
-    # Trouve les points où le P&L change de signe
+    # Find points where P&L changes sign
     break_even_points = []
     for i in range(1, len(pls)):
         if (pls[i-1] <= 0 and pls[i] > 0) or (pls[i-1] >= 0 and pls[i] < 0):
-            # Interpolation linéaire pour trouver le prix exact
+            # Linear interpolation to find exact price
             x1, x2 = price_points[i-1], price_points[i]
             y1, y2 = pls[i-1], pls[i]
             
-            # Formule d'interpolation: y = 0 => x = x1 + (0 - y1) * (x2 - x1) / (y2 - y1)
-            if y1 != y2:  # Éviter division par zéro
+            # Interpolation formula: y = 0 => x = x1 + (0 - y1) * (x2 - x1) / (y2 - y1)
+            if y1 != y2:  # Avoid division by zero
                 break_even = x1 - y1 * (x2 - x1) / (y2 - y1)
                 break_even_points.append(round(break_even, 2))
     
     return break_even_points
 
-# Titre et description
-st.title("Visualisateur de Stratégies d'Options pour Entretiens")
+# Title and description
+st.title("Options Strategy Visualizer for Interviews")
 st.markdown("""
-    Cette application vous aide à visualiser les profils de risque/rendement et à comprendre les caractéristiques derrière les statégies d'options.
+    This application helps you visualize risk/reward profiles and understand the characteristics behind options strategies.
 """)
 
-# Création de la mise en page à 2 colonnes
+# Create 2-column layout
 col1, col2 = st.columns([1, 2])
 
-# Paramètres dans la première colonne
+# Parameters in first column
 with col1:
-    st.markdown("## Paramètres")
-    st.markdown("Ajustez les paramètres pour visualiser les différents scénarios")
+    st.markdown("## Parameters")
+    st.markdown("Adjust settings to visualize different scenarios")
     
-    # Sélection de la stratégie
+    # Strategy selection
     strategy_names = [s.name for s in STRATEGIES]
-    selected_strategy_name = st.selectbox("Stratégie d'options", strategy_names, index=0)
+    selected_strategy_name = st.selectbox("Options Strategy", strategy_names, index=0)
     selected_strategy = next(s for s in STRATEGIES if s.name == selected_strategy_name)
     
-    # Comparaison avec détention simple d'action
+    # Comparison with simple stock holding
     compare_with_stock = False
     
-    # Prix du sous-jacent fixe
+    # Fixed underlying price
     underlying_price = 100.0
     
-    # Plage d'affichage
+    # Display range
     price_range = st.slider(
-        "Plage d'affichage (%)",
+        "Display range (%)",
         min_value=5,
         max_value=100,
         value=25,
@@ -335,41 +335,41 @@ with col1:
         format="±%d%%"
     )
     
-    # Afficher décomposition
-    show_decomposition = st.checkbox("Afficher décomposition par option", value=True)
+    # Show decomposition
+    show_decomposition = st.checkbox("Show option breakdown", value=True)
     
-    # Afficher zones de profit/perte
-    show_profit_loss_zones = st.checkbox("Afficher zones de profit/perte", value=True)
+    # Show profit/loss zones
+    show_profit_loss_zones = st.checkbox("Show profit/loss zones", value=True)
     
-    # Notes d'entretien
-    st.markdown("## Objectif de la stratégie")
+    # Interview notes
+    st.markdown("## Strategy Objective")
     st.info(selected_strategy.interview_notes)
 
-# Graphique de profit/perte dans la deuxième colonne
+# Profit/loss chart in second column
 with col2:
-    st.markdown("## Profit and Lost")
+    st.markdown("## Profit and Loss")
     
     if show_decomposition:
-        st.markdown("P&L à l'expiration pour chaque option et stratégie complète")
+        st.markdown("P&L at expiration for each option and complete strategy")
     else:
-        st.markdown("P&L à l'expiration pour la stratégie complète")
+        st.markdown("P&L at expiration for complete strategy")
     
-    # Générer les données pour le graphique
+    # Generate data for chart
     min_price = underlying_price * (1 - price_range / 100)
     max_price = underlying_price * (1 + price_range / 100)
     price_points = np.linspace(min_price, max_price, 100)
     
-    # Créer le graphique avec Plotly
+    # Create chart with Plotly
     fig = go.Figure()
     
-    # Ajouter des zones de profit/perte si demandé
+    # Add profit/loss zones if requested
     if show_profit_loss_zones:
         total_pl = [calculate_profit_loss(selected_strategy, price) for price in price_points]
         
-        # Trouver les points d'équilibre
+        # Find break-even points
         break_even_points = find_break_even_points(selected_strategy)
         
-        # Créer les zones de profit (positif) et perte (négatif)
+        # Create profit (positive) and loss (negative) zones
         x_profit = []
         y_profit = []
         x_loss = []
@@ -383,7 +383,7 @@ with col2:
                 x_loss.append(price)
                 y_loss.append(total_pl[i])
         
-        # Ajouter les zones remplies
+        # Add filled areas
         if x_profit:
             fig.add_trace(go.Scatter(
                 x=x_profit,
@@ -391,7 +391,7 @@ with col2:
                 fill='tozeroy',
                 mode='none',
                 fillcolor='rgba(0, 150, 255, 0.2)',
-                name='Zone de profit'
+                name='Profit zone'
             ))
         
         if x_loss:
@@ -401,20 +401,20 @@ with col2:
                 fill='tozeroy',
                 mode='none',
                 fillcolor='rgba(255, 0, 0, 0.2)',
-                name='Zone de perte'
+                name='Loss zone'
             ))
     
-    # Calculer et ajouter les P&L pour chaque jambe de la stratégie si demandé
+    # Calculate and add P&L for each strategy leg if requested
     if show_decomposition:
         for i, leg in enumerate(selected_strategy.legs):
             if leg.type == "stock":
-                leg_name = f"{'Achat' if leg.position == 'long' else 'Vente'} {leg.quantity} Actions"
+                leg_name = f"{'Buy' if leg.position == 'long' else 'Sell'} {leg.quantity} Shares"
             else:
-                leg_name = f"{'Achat' if leg.position == 'long' else 'Vente'} {leg.quantity} {'Call' if leg.type == 'call' else 'Put'} K={leg.strike}"
+                leg_name = f"{'Buy' if leg.position == 'long' else 'Sell'} {leg.quantity} {'Call' if leg.type == 'call' else 'Put'} K={leg.strike}"
             
             leg_pl = [calculate_option_pl(leg, price) for price in price_points]
             
-            # Couleurs différentes pour chaque jambe
+            # Different colors for each leg
             colors = ['rgba(31, 119, 180, 0.7)', 'rgba(255, 127, 14, 0.7)', 
                      'rgba(44, 160, 44, 0.7)', 'rgba(214, 39, 40, 0.7)',
                      'rgba(148, 103, 189, 0.7)', 'rgba(140, 86, 75, 0.7)']
@@ -427,7 +427,7 @@ with col2:
                 name=leg_name
             ))
     
-    # Ajouter la ligne de profit/perte total
+    # Add total profit/loss line
     total_pl = [calculate_profit_loss(selected_strategy, price) for price in price_points]
     
     fig.add_trace(go.Scatter(
@@ -435,19 +435,19 @@ with col2:
         y=total_pl,
         mode='lines',
         line=dict(color='#3b82f6', width=3),
-        name='P&L Total'
+        name='Total P&L'
     ))
     
-    # Ajouter la ligne de référence à P&L = 0
+    # Add reference line at P&L = 0
     fig.add_hline(y=0, line=dict(color='#666666', width=1, dash='solid'))
     
-    # Ajouter la ligne de référence au prix actuel
+    # Add reference line at current price
     fig.add_vline(x=underlying_price, line=dict(color='#666666', width=1, dash='dash'))
     
-    # Configurer le layout
+    # Configure layout
     fig.update_layout(
-        xaxis_title="Prix du sous-jacent",
-        yaxis_title="Profit/Perte",
+        xaxis_title="Underlying Price",
+        yaxis_title="Profit/Loss",
         margin=dict(l=0, r=0, t=0, b=0),
         height=500,
         xaxis=dict(
@@ -471,55 +471,55 @@ with col2:
         )
     )
     
-    # Afficher le graphique
+    # Display chart
     st.plotly_chart(fig, use_container_width=True)
 
-# Informations sur la stratégie en dessous
+# Strategy information below
 st.markdown(f"## {selected_strategy.name}")
 st.markdown(selected_strategy.description)
 
-# Tableau des composants de la stratégie
+# Strategy components table
 st.markdown("### Composition")
 legs_data = []
 for leg in selected_strategy.legs:
     legs_data.append({
-        "Type": "Action" if leg.type == "stock" else "Call" if leg.type == "call" else "Put",
-        "Position": "Achat" if leg.position == "long" else "Vente",
+        "Type": "Stock" if leg.type == "stock" else "Call" if leg.type == "call" else "Put",
+        "Position": "Buy" if leg.position == "long" else "Sell",
         "Strike": f"{leg.strike:.2f}",
-        "Prime": f"{leg.premium:.2f}",
-        "Quantité": leg.quantity
+        "Premium": f"{leg.premium:.2f}",
+        "Quantity": leg.quantity
     })
 st.table(pd.DataFrame(legs_data))
 
-# Coût total initial de la stratégie
+# Total initial cost of strategy
 total_premium = sum(
     -leg.premium * leg.quantity if leg.position == "long" else leg.premium * leg.quantity
     for leg in selected_strategy.legs if leg.type != "stock"
 )
-st.markdown(f"**Coût initial de la stratégie:** {'+ ' if total_premium > 0 else '- '}{abs(total_premium):.2f}")
+st.markdown(f"**Initial strategy cost:** {'+ ' if total_premium > 0 else '- '}{abs(total_premium):.2f}")
 
-# Caractéristiques de la stratégie
-st.markdown("### Caractéristiques")
+# Strategy characteristics
+st.markdown("### Characteristics")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown(f"**Directionnel:** {get_directionality(selected_strategy)}")
-    st.markdown(f"**Risque maximum:** {get_risk(selected_strategy)}")
-    st.markdown(f"**Profit maximum:** {get_profit(selected_strategy)}")
+    st.markdown(f"**Directional:** {get_directionality(selected_strategy)}")
+    st.markdown(f"**Maximum risk:** {get_risk(selected_strategy)}")
+    st.markdown(f"**Maximum profit:** {get_profit(selected_strategy)}")
 
 with col2:
-    st.markdown(f"**Meilleur scénario:** {get_best_case(selected_strategy)}")
-    st.markdown(f"**Pire scénario:** {get_worst_case(selected_strategy)}")
+    st.markdown(f"**Best scenario:** {get_best_case(selected_strategy)}")
+    st.markdown(f"**Worst scenario:** {get_worst_case(selected_strategy)}")
     
-    # Points d'équilibre
+    # Break-even points
     break_even_points = find_break_even_points(selected_strategy)
     if break_even_points:
-        st.markdown(f"**Points d'équilibre:** {', '.join([str(point) for point in break_even_points])}")
+        st.markdown(f"**Break-even points:** {', '.join([str(point) for point in break_even_points])}")
     else:
-        st.markdown("**Points d'équilibre:** Aucun point d'équilibre identifié")
+        st.markdown("**Break-even points:** No break-even points identified")
 
 
-# Afficher un petit message de bas de page
+# Footer message
 st.markdown("---")
 st.markdown(
     """
