@@ -9,9 +9,9 @@ page_dict = {
     "🏠 Homepage": [st.Page("pages/Page_Accueil.py", title="Homepage")],
     "💱 FX": [st.Page("pages/FX/FX.py", title="Marché FX")],
     "📊 Options": [
-        st.Page("pages/options/Grecs.py", title="Greeks Visualizer"),
-        st.Page("pages/options/Pricing_options.py", title="Pricer"),
-        st.Page("pages/options/Stratégie_options.py", title="Strategies")
+        st.Page("pages/options/Greeks_Visualizer.py", title="Greeks Visualizer"),
+        st.Page("pages/options/Pricer.py", title="Pricer"),
+        st.Page("pages/options/Strategies.py", title="Strategies")
     ]
 }
 
