@@ -109,271 +109,319 @@ def calculate_volatility(ticker):
     except:
         return 0.3  # Default value in case of error
 
-# Updated payoff diagram to show buyer and seller with zoom on breakeven point
-def plot_option_payoff(S, K, premium, option_type="call"):
-    # Calculate breakeven point
-    if option_type == "call":
-        breakeven = K + premium
-    else:
-        breakeven = K - premium
+// Updated payoff diagram to show buyer and seller with zoom on breakeven point
+function plot_option_payoff(S, K, premium, option_type="call") {
+    // Calculate breakeven point
+    if (option_type === "call") {
+        breakeven = K + premium;
+    } else {
+        breakeven = K - premium;
+    }
     
-    # Calculate limits to zoom around current price and breakeven point
-    # We take a margin of ±15% around the min/max between current price and breakeven
-    price_range = abs(S - breakeven) * 0.5  # 50% of distance between S and breakeven
-    min_price = min(S, breakeven) - price_range
-    max_price = max(S, breakeven) + price_range
+    // Calculate limits to zoom around current price and breakeven point
+    // We take a margin of ±15% around the min/max between current price and breakeven
+    const price_range = Math.abs(S - breakeven) * 0.5;  // 50% of distance between S and breakeven
+    let min_price = Math.min(S, breakeven) - price_range;
+    let max_price = Math.max(Math.max(S, breakeven) + price_range, 0);
     
-    # Ensure minimum margin of 5% of strike price
-    min_price = min(min_price, K * 0.95)
-    max_price = max(max_price, K * 1.05)
+    // Ensure minimum margin of 5% of strike price
+    min_price = Math.min(min_price, K * 0.95);
+    max_price = Math.max(max_price, K * 1.05);
     
-    # Generate prices for the chart (focused around point of interest)
-    stock_prices = np.linspace(min_price, max_price, 150)
+    // Generate prices for the chart (focused around point of interest)
+    const stock_prices = np.linspace(min_price, max_price, 150);
     
-    if option_type == "call":
-        # Payoff for call buyer
-        buyer_payoffs = np.maximum(stock_prices - K, 0) - premium
-        buyer_breakeven = K + premium
-        
-        # Payoff for call seller
-        seller_payoffs = premium - np.maximum(stock_prices - K, 0)
-        seller_breakeven = buyer_breakeven
-    else:
-        # Payoff for put buyer
-        buyer_payoffs = np.maximum(K - stock_prices, 0) - premium
-        buyer_breakeven = K - premium
-        
-        # Payoff for put seller
-        seller_payoffs = premium - np.maximum(K - stock_prices, 0)
-        seller_breakeven = buyer_breakeven
-    
-    fig = go.Figure()
-    
-    # Payoff curve for buyer
-    fig.add_trace(go.Scatter(
-        x=stock_prices, 
-        y=buyer_payoffs, 
-        mode='lines', 
-        name=f'{option_type.capitalize()} Buyer',
-        line=dict(color='blue' if option_type == "call" else 'green', width=3)
-    ))
-    
-    # Payoff curve for seller
-    fig.add_trace(go.Scatter(
-        x=stock_prices, 
-        y=seller_payoffs, 
-        mode='lines', 
-        name=f'{option_type.capitalize()} Seller',
-        line=dict(color='red' if option_type == "call" else 'orange', width=3)
-    ))
-    
-    # Zero line
-    fig.add_shape(
-        type="line", line=dict(dash="dash", width=1.5, color="gray"),
-        x0=min_price, y0=0, x1=max_price, y1=0
-    )
-    
-    # Breakeven point
-    fig.add_trace(go.Scatter(
-        x=[buyer_breakeven], 
-        y=[0], 
-        mode='markers', 
-        name='Breakeven Point',
-        marker=dict(color='purple', size=12, symbol='diamond')
-    ))
-    
-    # Strike price
-    fig.add_shape(
-        type="line", line=dict(dash="dot", width=1.5, color="darkgray"),
-        x0=K, y0=min(np.min(buyer_payoffs), np.min(seller_payoffs)), 
-        x1=K, y1=max(np.max(buyer_payoffs), np.max(seller_payoffs))
-    )
-    fig.add_annotation(
-        x=K, y=min(np.min(buyer_payoffs), np.min(seller_payoffs)),
-        text=f"Strike: ${K:.2f}",
-        showarrow=True,
-        arrowhead=1,
-        yshift=-10
-    )
-    
-    # Current price for buyer
-    current_buyer_payoff = (np.maximum(S - K, 0) - premium) if option_type == "call" else (np.maximum(K - S, 0) - premium)
-    fig.add_trace(go.Scatter(
-        x=[S], 
-        y=[current_buyer_payoff], 
-        mode='markers', 
-        name='Current Price (Buyer)',
-        marker=dict(color='darkblue', size=12)
-    ))
-    
-    # Current price for seller
-    current_seller_payoff = (premium - np.maximum(S - K, 0)) if option_type == "call" else (premium - np.maximum(K - S, 0))
-    fig.add_trace(go.Scatter(
-        x=[S], 
-        y=[current_seller_payoff], 
-        mode='markers', 
-        name='Current Price (Seller)',
-        marker=dict(color='darkred', size=12)
-    ))
-    
-    # Vertical line at current price
-    fig.add_shape(
-        type="line", line=dict(dash="dashdot", width=1.5, color="orange"),
-        x0=S, y0=min(np.min(buyer_payoffs), np.min(seller_payoffs)), 
-        x1=S, y1=max(np.max(buyer_payoffs), np.max(seller_payoffs))
-    )
-    fig.add_annotation(
-        x=S, y=max(np.max(buyer_payoffs), np.max(seller_payoffs)),
-        text=f"Current Price: ${S:.2f}",
-        showarrow=True,
-        arrowhead=1,
-        yshift=10
-    )
-    fig.update_layout(
-    title=f"",  # <-- C'est ici que le titre est défini
-    xaxis_title="Stock Price at Expiration",
-    yaxis_title="Profit/Loss ($)",
-    height=500,
-    margin=dict(l=20, r=20, t=50, b=20),
-    plot_bgcolor='rgba(240,240,240,0.5)',
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1
-    )
-)
-    
-    fig.update_xaxes(tickprefix="$")
-    fig.update_yaxes(tickprefix="$")
-    
-    return fig
+    let buyer_payoffs;
+    let seller_payoffs;
+    let buyer_breakeven;
+    let seller_breakeven;
 
-# Main application
-def main():
-    st.markdown("""
+    if (option_type === "call") {
+        // Payoff for call buyer
+        buyer_payoffs = stock_prices.map(price => Math.max(price - K, 0) - premium);
+        buyer_breakeven = K + premium;
+        
+        // Payoff for call seller
+        seller_payoffs = stock_prices.map(price => premium - Math.max(price - K, 0));
+        seller_breakeven = buyer_breakeven;
+    } else {
+        // Payoff for put buyer
+        buyer_payoffs = stock_prices.map(price => Math.max(K - price, 0) - premium);
+        buyer_breakeven = K - premium;
+        
+        // Payoff for put seller
+        seller_payoffs = stock_prices.map(price => premium - Math.max(K - price, 0));
+        seller_breakeven = buyer_breakeven;
+    }
+    
+    const fig = go.Figure();
+    
+    // Payoff curve for buyer
+    fig.add_trace(go.Scatter(
+        {
+        x: stock_prices, 
+        y: buyer_payoffs, 
+        mode: 'lines', 
+        name: `${option_type.charAt(0).toUpperCase() + option_type.slice(1)} Buyer`,
+        line: {color: option_type === "call" ? 'blue' : 'green', width: 3}
+    }
+    ));
+    
+    // Payoff curve for seller
+    fig.add_trace(go.Scatter(
+        {
+        x: stock_prices, 
+        y: seller_payoffs, 
+        mode: 'lines', 
+        name: `${option_type.charAt(0).toUpperCase() + option_type.slice(1)} Seller`,
+        line: {color: option_type === "call" ? 'red' : 'orange', width: 3}
+    }
+    ));
+    
+    // Zero line
+    fig.add_shape(
+        {
+        type: "line", line: {dash: "dash", width: 1.5, color: "gray"},
+        x0: min_price, y0: 0, x1: max_price, y1: 0
+    }
+    );
+    
+    // Breakeven point
+    fig.add_trace(go.Scatter(
+        {
+        x: [buyer_breakeven], 
+        y: [0], 
+        mode: 'markers', 
+        name: 'Breakeven Point',
+        marker: {color: 'purple', size: 12, symbol: 'diamond'}
+    }
+    ));
+    
+    // Strike price
+    fig.add_shape(
+        {
+        type: "line", line: {dash: "dot", width: 1.5, color: "darkgray"},
+        x0: K, y0: Math.min(...buyer_payoffs, ...seller_payoffs), 
+        x1: K, y1: Math.max(...buyer_payoffs, ...seller_payoffs)
+    }
+    );
+    fig.add_annotation(
+        {
+        x: K, y: Math.min(...buyer_payoffs, ...seller_payoffs),
+        text: `Strike: $${K.toFixed(2)}`,
+        showarrow: true,
+        arrowhead: 1,
+        yshift: -10
+    }
+    );
+    // Current price for buyer
+    const current_buyer_payoff = (option_type === "call") ? (Math.max(S - K, 0) - premium) : (Math.max(K - S, 0) - premium);
+    fig.add_trace(go.Scatter(
+        {
+        x: [S], 
+        y: [current_buyer_payoff], 
+        mode: 'markers', 
+        name: 'Current Price (Buyer)',
+        marker: {color: 'darkblue', size: 12}
+    }
+    ));
+    
+    // Current price for seller
+    const current_seller_payoff = (option_type === "call") ? (premium - Math.max(S - K, 0)) : (premium - Math.max(K - S, 0));
+    fig.add_trace(go.Scatter(
+        {
+        x: [S], 
+        y: [current_seller_payoff], 
+        mode: 'markers', 
+        name: 'Current Price (Seller)',
+        marker: {color: 'darkred', size: 12}
+    }
+    ));
+    
+    // Vertical line at current price
+    fig.add_shape(
+        {
+        type: "line", line: {dash: "dashdot", width: 1.5, color: "orange"},
+        x0: S, y0: Math.min(...buyer_payoffs, ...seller_payoffs), 
+        x1: S, y1: Math.max(...buyer_payoffs, ...seller_payoffs)
+    }
+    );
+    fig.add_annotation(
+        {
+        x: S, y: Math.max(...buyer_payoffs, ...seller_payoffs),
+        text: `Current Price: $${S.toFixed(2)}`,
+        showarrow: true,
+        arrowhead: 1,
+        yshift: 10
+    }
+    );
+    fig.update_layout(
+    {
+    title: ``,  // <-- C'est ici que le titre est défini
+    xaxis_title: "Stock Price at Expiration",
+    yaxis_title: "Profit/Loss ($)",
+    height: 500,
+    margin: {l: 20, r: 20, t: 50, b: 20},
+    plot_bgcolor: 'rgba(240,240,240,0.5)',
+    legend: {
+        orientation: "h",
+        yanchor: "bottom",
+        y: 1.02,
+        xanchor: "right",
+        x: 1
+    }
+}
+    );
+    
+    fig.update_xaxes({tickprefix: "$"});
+    fig.update_yaxes({tickprefix: "$"});
+    
+    return fig;
+}
+
+// Main application
+function main() {
+    st.markdown(`
 <h1 style="font-size: 2.5rem; font-weight: 700; color: #1E88E5; text-align: center; margin-bottom: 1rem;">Options Calculator</h1>
-""", unsafe_allow_html=True)
-    st.markdown("""
+`, {unsafe_allow_html: true});
+    st.markdown(`
 A complete Black-Scholes calculator for option pricing, payoff visualization, and Greek sensitivity analysis.
-""", unsafe_allow_html=True)
+`, {unsafe_allow_html: true});
     
-    # Layout in 2 columns: left for inputs, right for results
-    col_inputs, col_results = st.columns([1, 2])
+    // Layout in 2 columns: left for inputs, right for results
+    const [col_inputs, col_results] = st.columns([1, 2]);
     
-    # Inputs column
-    with col_inputs:
-        st.markdown("""
+    // Inputs column
+    with (col_inputs) {
+        st.markdown(`
 <div style='text-align: center;'>
     <h3 style='color: black;'>Filters</h3>
 </div>
-""", unsafe_allow_html=True)
+`, {unsafe_allow_html: true});
         
-        # Option type (moved to top)
-        option_type = st.radio("Option Type", ["Call", "Put"])
+        // Option type (moved to top)
+        const option_type = st.radio("Option Type", ["Call", "Put"]);
         
-        # Stock ticker
-        ticker = st.text_input('Stock Symbol', 'AAPL').upper()
+        // Stock ticker
+        const ticker = st.text_input('Stock Symbol', 'AAPL').toUpperCase();
         
-        try:
-            # Data retrieval
-            stock = yf.Ticker(ticker)
-            stock_info = stock.history(period="1d")
-            current_price = stock_info['Close'][0]
+        try {
+            // Data retrieval
+            const stock = yf.Ticker(ticker);
+            const stock_info = stock.history({period: "1d"});
+            const current_price = stock_info['Close'][0];
             
-            st.markdown(f"<p class='metric-label'>Current Price</p><p class='metric-value'>${current_price:.2f}</p>", unsafe_allow_html=True)
+            // CHANGE 1: Removed the current price display from here
+            // It will now be displayed in the results column with the other metrics
             
-            # Expiration period
-            expiry_options = {
+            // Expiration period
+            const expiry_options = {
                 "15 Days": 15,
                 "1 Month": 30,
                 "2 Months": 60,
                 "3 Months": 90,
                 "6 Months": 180,
                 "1 Year": 365
+            };
+            
+            const selected_period = st.selectbox("Time to Expiration", Object.keys(expiry_options));
+            const days_to_expiry = expiry_options[selected_period];
+            
+            // Calculate expiration date and time to expiration in years
+            const T = days_to_expiry / 365.0;
+            
+            // CHANGE 2: Simplified Strike Price input
+            // Replaced the radio button with a more direct approach
+            st.markdown("### Strike Price");
+            const K = st.number_input('Enter Strike Price', 
+                               value=parseFloat(current_price), 
+                               min_value=0.01, 
+                               step=0.01,
+                               help="Enter your desired strike price or use the default at-the-money price");
+            
+            // Add a button to quickly set to current price (ATM)
+            if (st.button("Set to Current Price (ATM)")) {
+                K = current_price;
             }
             
-            selected_period = st.selectbox("Time to Expiration", list(expiry_options.keys()))
-            days_to_expiry = expiry_options[selected_period]
+            // Volatility
+            const volatility = calculate_volatility(ticker);
+            const sigma = st.slider("Volatility (σ) %", {min_value: 1.0, max_value: 100.0, value: parseFloat(volatility * 100), step: 0.1}) / 100;
             
-            # Calculate expiration date and time to expiration in years
-            T = days_to_expiry / 365.0
-            
-            # Strike price
-            strike_method = st.radio("Strike Price Method", ["ATM", "Custom"])
-            
-            if strike_method == "ATM":
-                K = current_price
-            else:
-                K = st.number_input('Strike Price (K)', value=float(current_price), min_value=0.01)
-            
-            # Volatility
-            volatility = calculate_volatility(ticker)
-            sigma = st.slider("Volatility (σ) %", min_value=1.0, max_value=100.0, value=float(volatility * 100), step=0.1) / 100
-            
-            st.info(f"""
+            st.info(`
             **Volatility Calculation**: Historical volatility is calculated over the last 60 trading days.
             It represents the annualized standard deviation of daily stock returns (×√252).
-            Calculated value for {ticker}: **{volatility*100:.2f}%**
-            """)
+            Calculated value for ${ticker}: **${(volatility*100).toFixed(2)}%**
+            `);
             
-            # Interest rate
-            r = st.slider("Risk-Free Rate (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
-            st.info("""
+            // Interest rate
+            const r = st.slider("Risk-Free Rate (r) %", {min_value: 0.0, max_value: 10.0, value: 5.0, step: 0.1}) / 100;
+            st.info(`
 The **risk-free rate** represents the return of a risk-free investment over the option's duration.
 Typically, we use the yield of **government bonds** with similar maturity and in the option's currency.
 For accurate valuation, check current bond yield data.
-""")
+`);
             
-        except Exception as e:
-            st.error(f"Error retrieving data for {ticker}: {e}")
-            st.stop()
+        } catch (e) {
+            st.error(`Error retrieving data for ${ticker}: ${e}`);
+            st.stop();
+        }
             
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', {unsafe_allow_html: true});
+    }
     
-    # Results column
-    with col_results:
-        try:
-            # Option price calculation
-            if option_type == "Call":
-                option_price = black_scholes_call(current_price, K, T, r, sigma)
-                greeks = calculate_greeks(current_price, K, T, r, sigma, "call")
-            else:
-                option_price = black_scholes_put(current_price, K, T, r, sigma)
-                greeks = calculate_greeks(current_price, K, T, r, sigma, "put")
+    // Results column
+    with (col_results) {
+        try {
+            let option_price;
+            let greeks;
+            // Option price calculation
+            if (option_type === "Call") {
+                option_price = black_scholes_call(current_price, K, T, r, sigma);
+                greeks = calculate_greeks(current_price, K, T, r, sigma, "call");
+            } else {
+                option_price = black_scholes_put(current_price, K, T, r, sigma);
+                greeks = calculate_greeks(current_price, K, T, r, sigma, "put");
+            }
             
-            # Display key metrics
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f"<div class='card'><p class='metric-label'>{option_type} Price</p><p class='metric-value'>${option_price:.2f}</p></div>", unsafe_allow_html=True)
-            with col2:
-                st.markdown(f"<div class='card'><p class='metric-label'>Strike Price</p><p class='metric-value'>${K:.2f}</p></div>", unsafe_allow_html=True)
-            with col3:
-                st.markdown(f"<div class='card'><p class='metric-label'>Days to Expiry</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
+            // CHANGE 1: Display key metrics - now with 4 columns including current price
+            const [col1, col2, col3, col4] = st.columns(4);
+            with (col1) {
+                st.markdown(`<div class='card'><p class='metric-label'>Current Price</p><p class='metric-value'>$${current_price.toFixed(2)}</p></div>`, {unsafe_allow_html: true});
+            }
+            with (col2) {
+                st.markdown(`<div class='card'><p class='metric-label'>${option_type} Price</p><p class='metric-value'>$${option_price.toFixed(2)}</p></div>`, {unsafe_allow_html: true});
+            }
+            with (col3) {
+                st.markdown(`<div class='card'><p class='metric-label'>Strike Price</p><p class='metric-value'>$${K.toFixed(2)}</p></div>`, {unsafe_allow_html: true});
+            }
+            with (col4) {
+                st.markdown(`<div class='card'><p class='metric-label'>Days to Expiry</p><p class='metric-value'>${days_to_expiry}</p></div>`, {unsafe_allow_html: true});
+            }
             
-            # Tabs for different visualizations
-            tab1, tab2, = st.tabs(["Payoff", "Greeks"])
+            // Tabs for different visualizations
+            const [tab1, tab2,] = st.tabs(["Payoff", "Greeks"]);
             
-            with tab1:
-                # More prominent title for payoff
-                st.markdown("<h3 style='text-align: center;'>Payoff Diagram (Profit/Loss) at Expiration</h3>", unsafe_allow_html=True)
+            with (tab1) {
+                // More prominent title for payoff
+                st.markdown("<h3 style='text-align: center;'>Payoff Diagram (Profit/Loss) at Expiration</h3>", {unsafe_allow_html: true});
                 
-                # Payoff diagram with buyer and seller, zoomed
-                st.plotly_chart(plot_option_payoff(current_price, K, option_price, option_type.lower()), use_container_width=True)
+                // Payoff diagram with buyer and seller, zoomed
+                const premium = option_price;
+                st.plotly_chart(plot_option_payoff(current_price, K, premium, option_type.toLowerCase()), {use_container_width: true});
                 
-                # Payoff explanation
-                # Key info about payoff (visible without clicking expander)
-                st.markdown("""
+                // Payoff explanation
+                // Key info about payoff (visible without clicking expander)
+                st.markdown(`
                 #### Key Points on This Chart:
                 - **Breakeven Point**: Price at which the investor neither gains nor loses money
                 - **Current Price**: Current position of the option (unrealized profit/loss)
                 - **Strike**: Option's exercise price
-                """)
+                `);
                 
-                with st.expander("Payoff Details"):
-                    if option_type == "Call":
-                        st.markdown("""
+                with (st.expander("Payoff Details")) {
+                    if (option_type === "Call") {
+                        st.markdown(`
                         ### Call Option
                         - **Call Buyer**: Profit = Max(Stock Price - Strike Price, 0) - Premium
                           - *Maximum profit*: Potentially unlimited
@@ -381,9 +429,9 @@ For accurate valuation, check current bond yield data.
                         - **Call Seller**: Profit = Premium - Max(Stock Price - Strike Price, 0)
                           - *Maximum profit*: Premium received
                           - *Maximum loss*: Potentially unlimited
-                        """)
-                    else:
-                        st.markdown("""
+                        `);
+                    } else {
+                        st.markdown(`
                         ### Put Option
                         - **Put Buyer**: Profit = Max(Strike Price - Stock Price, 0) - Premium
                           - *Maximum profit*: Strike Price - Premium (if price falls to zero)
@@ -391,45 +439,59 @@ For accurate valuation, check current bond yield data.
                         - **Put Seller**: Profit = Premium - Max(Strike Price - Stock Price, 0)
                           - *Maximum profit*: Premium received
                           - *Maximum loss*: Strike Price - Premium (if price falls to zero)
-                        """)
+                        `);
+                    }
+                }
+            }
             
-            with tab2:
-                # Greeks
-                c1, c2, c3, c4, c5 = st.columns(5)
-                with c1:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Delta</p><p class='metric-value'>{greeks['delta']:.4f}</p></div>", unsafe_allow_html=True)
-                with c2:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Gamma</p><p class='metric-value'>{greeks['gamma']:.4f}</p></div>", unsafe_allow_html=True)
-                with c3:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Theta</p><p class='metric-value'>{greeks['theta']:.4f}</p></div>", unsafe_allow_html=True)
-                with c4:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Vega</p><p class='metric-value'>{greeks['vega']:.4f}</p></div>", unsafe_allow_html=True)
-                with c5:
-                    st.markdown(f"<div class='card'><p class='metric-label'>Rho</p><p class='metric-value'>{greeks['rho']:.4f}</p></div>", unsafe_allow_html=True)
+            with (tab2) {
+                // Greeks
+                const [c1, c2, c3, c4, c5] = st.columns(5);
+                with (c1) {
+                    st.markdown(`<div class='card'><p class='metric-label'>Delta</p><p class='metric-value'>${greeks['delta'].toFixed(4)}</p></div>`, {unsafe_allow_html: true});
+                }
+                with (c2) {
+                    st.markdown(`<div class='card'><p class='metric-label'>Gamma</p><p class='metric-value'>${greeks['gamma'].toFixed(4)}</p></div>`, {unsafe_allow_html: true});
+                }
+                with (c3) {
+                    st.markdown(`<div class='card'><p class='metric-label'>Theta</p><p class='metric-value'>${greeks['theta'].toFixed(4)}</p></div>`, {unsafe_allow_html: true});
+                }
+                with (c4) {
+                    st.markdown(`<div class='card'><p class='metric-label'>Vega</p><p class='metric-value'>${greeks['vega'].toFixed(4)}</p></div>`, {unsafe_allow_html: true});
+                }
+                with (c5) {
+                    st.markdown(`<div class='card'><p class='metric-label'>Rho</p><p class='metric-value'>${greeks['rho'].toFixed(4)}</p></div>`, {unsafe_allow_html: true});
+                }
                 
-                with st.expander("What Do the Greeks Mean?"):
-                    st.markdown("""
+                with (st.expander("What Do the Greeks Mean?")) {
+                    st.markdown(`
                     - **Delta**: Measures the rate of change of the option price with respect to changes in the underlying asset's price.
                     - **Gamma**: Measures the rate of change of delta with respect to changes in the underlying price.
                     - **Theta**: Measures the rate of change of the option price with respect to time (time decay).
                     - **Vega**: Measures the rate of change of the option price with respect to volatility.
                     - **Rho**: Measures the rate of change of the option price with respect to the risk-free interest rate.
-                    """)
+                    `);
+                }
+            }
 
-        except Exception as e:
-            st.error(f"Calculation error: {e}")
+        } catch (e) {
+            st.error(`Calculation error: ${e}`);
+        }
+    }
+}
 
 
-if __name__ == "__main__":
-    main()
-st.markdown("---")
-st.markdown(
-        """
-        <div style="text-align: center;">
-            <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
-                PGB
-            </a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+if (typeof window !== 'undefined' && window.document) {
+    main();
+    st.markdown("---");
+    st.markdown(
+            `
+            <div style="text-align: center;">
+                <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
+                    PGB
+                </a>
+            </div>
+            `,
+            {unsafe_allow_html: true}
+        );
+}
