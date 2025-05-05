@@ -6,6 +6,12 @@ from scipy.stats import norm
 import datetime
 import plotly.graph_objects as go
 
+# Initialisation de session_state pour conserver les valeurs entre les exécutions
+if 'strike_price' not in st.session_state:
+    st.session_state.strike_price = None
+if 'set_to_current' not in st.session_state:
+    st.session_state.set_to_current = False
+
 # CSS for styling
 st.markdown("""
 <style>
@@ -250,6 +256,10 @@ def plot_option_payoff(S, K, premium, option_type="call"):
     
     return fig
 
+# Fonction pour définir le prix d'exercice au prix actuel
+def set_strike_to_current():
+    st.session_state.set_to_current = True
+
 # Main application
 def main():
     st.markdown("""
@@ -301,17 +311,32 @@ A complete Black-Scholes calculator for option pricing, payoff visualization, an
             # Calculate expiration date and time to expiration in years
             T = days_to_expiry / 365.0
             
-            # CHANGEMENT 2: Simplification du filtre Strike Price
+            # CHANGEMENT 2: Correction du problème avec le Strike Price
             st.markdown("### Strike Price")
-            K = st.number_input('Enter Strike Price', 
-                               value=float(current_price), 
-                               min_value=0.01, 
-                               step=0.01,
-                               help="Enter your desired strike price or use the default at-the-money price")
             
-            # Ajout d'un bouton pour définir rapidement le prix d'exercice au prix actuel (ATM)
-            if st.button("Set to Current Price (ATM)"):
-                K = current_price
+            # Initialiser le prix d'exercice si c'est la première fois ou si le bouton ATM a été cliqué
+            if st.session_state.strike_price is None or st.session_state.set_to_current:
+                initial_value = current_price
+                st.session_state.set_to_current = False
+            else:
+                initial_value = st.session_state.strike_price
+            
+            # Input pour le prix d'exercice
+            K = st.number_input(
+                'Enter Strike Price', 
+                value=float(initial_value),
+                min_value=0.01, 
+                step=0.01,
+                key="strike_input",
+                help="Enter your desired strike price"
+            )
+            
+            # Mettre à jour la valeur dans session_state
+            st.session_state.strike_price = K
+            
+            # Bouton pour définir au prix actuel
+            if st.button("Set to Current Price (ATM)", on_click=set_strike_to_current):
+                pass  # La logique est gérée dans la fonction on_click
             
             # Volatility
             volatility = calculate_volatility(ticker)
