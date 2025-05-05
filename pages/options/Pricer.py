@@ -441,7 +441,3 @@ st.markdown(
         unsafe_allow_html=True
     )
 
-# Affichage des modifications pour démonstration
-print("Modifications effectuées:")
-print("1. Déplacement du prix actuel à côté des autres données")
-print("2. Simplification du filtre Strike Price")
