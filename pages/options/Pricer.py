@@ -255,6 +255,9 @@ def main():
     st.markdown("""
 <h1 style="font-size: 2.5rem; font-weight: 700; color: #1E88E5; text-align: center; margin-bottom: 1rem;">Options Calculator</h1>
 """, unsafe_allow_html=True)
+    st.markdown("""
+A complete Black-Scholes calculator for option pricing, payoff visualization, and Greek sensitivity analysis.
+""", unsafe_allow_html=True)
     
     # Layout in 2 columns: left for inputs, right for results
     col_inputs, col_results = st.columns([1, 2])
@@ -313,7 +316,7 @@ def main():
             **Volatility Calculation**: Historical volatility is calculated over the last 60 trading days.
             It represents the annualized standard deviation of daily stock returns (×√252).
             Calculated value for {ticker}: **{volatility*100:.2f}%**
-            """, icon="ℹ️")
+            """)
             
             # Interest rate
             r = st.slider("Risk-Free Rate (r) %", min_value=0.0, max_value=10.0, value=5.0, step=0.1) / 100
