@@ -353,7 +353,7 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
                 st.markdown(f"<div class='card'><p class='metric-label'>Jours à l'échéance</p><p class='metric-value'>{days_to_expiry}</p></div>", unsafe_allow_html=True)
             
             # Onglets pour les différentes visualisations
-            tab1, tab2, tab3= st.tabs(["Payoff", "Greeks", "test"])
+            tab1, tab2, = st.tabs(["Payoff", "Greeks"])
             
             with tab1:
                 # Titre plus prominent pour le payoff
@@ -416,18 +416,6 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
                     - **Rho**: Mesure le taux de changement du prix de l'option par rapport aux changements du taux d'intérêt sans risque.
                     """)
                     # Afficher un petit message de bas de page
-            with tab3:
-                st.markdown("---")
-                st.markdown(
-    """
-    <div style="text-align: center;">
-        <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
-            PGB
-        </a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 
         
