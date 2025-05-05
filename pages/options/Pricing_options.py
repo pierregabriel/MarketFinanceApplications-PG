@@ -230,22 +230,6 @@ def plot_option_payoff(S, K, premium, option_type="call"):
         yshift=10
     )
     
-    fig.update_layout(
-        title=f"{option_type.capitalize()} Option Payoff at Expiration (Buyer vs Seller)",
-        xaxis_title="Stock Price at Expiration",
-        yaxis_title="Profit/Loss ($)",
-        height=500, # Increased height for better visualization
-        margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor='rgba(240,240,240,0.5)',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
-    
     fig.update_xaxes(tickprefix="$")
     fig.update_yaxes(tickprefix="$")
     
