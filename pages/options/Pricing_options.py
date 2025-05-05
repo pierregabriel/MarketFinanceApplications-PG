@@ -229,6 +229,21 @@ def plot_option_payoff(S, K, premium, option_type="call"):
         arrowhead=1,
         yshift=10
     )
+    fig.update_layout(
+    title=f"",  # <-- C'est ici que le titre est défini
+    xaxis_title="Stock Price at Expiration",
+    yaxis_title="Profit/Loss ($)",
+    height=500,
+    margin=dict(l=20, r=20, t=50, b=20),
+    plot_bgcolor='rgba(240,240,240,0.5)',
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    )
+)
     
     fig.update_xaxes(tickprefix="$")
     fig.update_yaxes(tickprefix="$")
