@@ -6,41 +6,6 @@ from dataclasses import dataclass
 from typing import List, Optional, Literal, Dict, Tuple, Union
 
 
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #1E88E5;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    .sub-header {
-        font-size: 1.5rem;
-        font-weight: 500;
-        color: #424242;
-        margin-bottom: 0.5rem;
-    }
-    .greek-box {
-        background-color: #f5f5f5;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    .highlight {
-        background-color: #e3f2fd;
-        padding: 5px;
-        border-radius: 5px;
-    }
-    .moneyness {
-        font-weight: bold;
-    }
-    .itm {color: #4CAF50;}
-    .atm {color: #FFC107;}
-    .otm {color: #F44336;}
-</style>
-""", unsafe_allow_html=True)
-
 # Definition of types
 @dataclass
 class StrategyOption:
