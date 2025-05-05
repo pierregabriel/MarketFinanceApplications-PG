@@ -421,6 +421,10 @@ Pour une évaluation précise, consultez les données actuelles des rendements o
         
         except Exception as e:
             st.error(f"Erreur lors des calculs: {e}")
+
+
+if __name__ == "__main__":
+    main()
 st.markdown("---")
 st.markdown(
         """
@@ -432,6 +436,3 @@ st.markdown(
         """,
         unsafe_allow_html=True
     )
-
-if __name__ == "__main__":
-    main()
