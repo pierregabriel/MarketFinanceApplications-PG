@@ -302,7 +302,9 @@ def find_break_even_points(strategy: Strategy) -> List[float]:
     return break_even_points
 
 # Title and description
-st.title("Options Strategy Visualizer")
+st.markdown("""
+<h1 style="font-size: 2.5rem; font-weight: 700; color: #1E88E5; text-align: center; margin-bottom: 1rem;">Options Strategy Visualizer</h1>
+""", unsafe_allow_html=True)
 st.markdown("""
     This application helps you visualize risk/reward profiles and understand the characteristics behind options strategies.
 """)
