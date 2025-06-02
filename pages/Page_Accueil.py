@@ -1,12 +1,6 @@
 import streamlit as st
 from datetime import datetime
 
-# Set page config
-st.set_page_config(
-    page_title="Portfolio - Pierre-Gabriel BILLAULT",
-    page_icon="📊",
-    layout="wide"
-)
 
 # Header
 st.title("Pierre-Gabriel BILLAULT - Market Finance Apps")
