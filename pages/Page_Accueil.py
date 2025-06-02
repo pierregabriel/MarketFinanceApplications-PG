@@ -1,58 +1,46 @@
 import streamlit as st
 from datetime import datetime
 
-# En-tête
-st.title("Portfolio de Projets en Finance de Marché")
-st.subheader("Pierre-Gabriel BILLAULT")
+# Set page config
+st.set_page_config(
+    page_title="Portfolio - Pierre-Gabriel BILLAULT",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Informations de contact
-st.markdown("""
-### Contact
-- 📧 Email: billaultpierregabriel@gmail.com
-- 📱 Téléphone: +33 7 81 17 42 24
-- 🔗 LinkedIn: [pierre-gabriel-billault](https://www.linkedin.com/in/pierre-gabriel-billault/)
-""")
+# Header
+st.title("Pierre-Gabriel BILLAULT - Market Finance Apps")
+st.subheader("Welcome to my personal portfolio")
 
 # Introduction
 st.markdown("""
-## Bienvenue sur mon portfolio
+This site gathers simple applications I built to **explore and better understand market finance**.
 
-Ce site présente mes projets réalisés pour comprendre et analyser la finance de marché.
-Je me suis principalement concentré sur deux domaines :
-- **Le marché des changes (FX)**
-- **Les options financières**
+You'll find:
+- A focus on **FX (Foreign Exchange)**, one of the first asset classes that caught my interest.
+- Several tools around **financial options**:
+    - Understanding the Greeks (sensitivities)
+    - A basic option pricer
+    - Visualizing classic option strategies
 
-Vous pouvez naviguer entre les différentes sections pour découvrir mes travaux dans ces domaines.
+These projects are designed as learning tools — they are not commercial products but aim to **demonstrate concepts** and help me (and maybe you) get a clearer grasp of derivatives and trading mechanics.
+
+Feel free to navigate through the sections!
 """)
 
-# Navigation simplifiée
-st.markdown("## Mes projets")
-options = st.selectbox(
-    "Sélectionnez une catégorie de projets :",
-    ["Tous les projets", "Projets FX", "Projets Options"]
-)
+# Contact Info
+st.markdown("""
+---
+### Contact
+- 📧 Email: billaultpierregabriel@gmail.com
+- 🔗 [LinkedIn](https://www.linkedin.com/in/pierre-gabriel-billault/)
+""")
 
-if options == "Tous les projets" or options == "Projets FX":
-    st.markdown("""
-    ### Projets - Marché FX
-    
-    Mes projets sur le marché des changes incluent des analyses de tendances, 
-    des outils de visualisation et des modèles prédictifs pour les principales paires de devises.
-    """)
-
-if options == "Tous les projets" or options == "Projets Options":
-    st.markdown("""
-    ### Projets - Options
-    
-    Mes projets sur les options financières comprennent des modèles de pricing, 
-    des analyses de sensibilité et des stratégies d'options pour différents scénarios de marché.
-    """)
-
-# Pied de page
+# Footer
 st.markdown("---")
 st.markdown(f"""
 <div style="text-align: center; padding: 10px; color: gray; font-size: 0.8em;">
     <p>© {datetime.now().year} Pierre-Gabriel BILLAULT</p>
-    <p>Dernière mise à jour : {datetime.now().strftime('%d/%m/%Y')}</p>
+    <p>Last updated: {datetime.now().strftime('%d/%m/%Y')}</p>
 </div>
 """, unsafe_allow_html=True)
