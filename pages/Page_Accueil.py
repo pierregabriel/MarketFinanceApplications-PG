@@ -27,6 +27,7 @@ st.markdown("""
 ---
 ### Contact
 - 📧 Email: billaultpierregabriel@gmail.com
+- 📱 Téléphone: +33 7 81 17 42 24
 - 🔗 [LinkedIn](https://www.linkedin.com/in/pierre-gabriel-billault/)
 """)
 
