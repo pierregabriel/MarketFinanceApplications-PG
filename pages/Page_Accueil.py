@@ -12,12 +12,13 @@ This site gathers simple applications I built to **explore and better understand
 
 You'll find:
 - A focus on **FX (Foreign Exchange)**, one of the first asset classes that caught my interest.
+    - Creation and explication of Forward FX
 - Several tools around **financial options**:
     - Understanding the Greeks (sensitivities)
     - A basic option pricer
     - Visualizing classic option strategies
 
-These projects are designed as learning tools — they are not commercial products but aim to **demonstrate concepts** and help me (and maybe you) get a clearer grasp of derivatives and trading mechanics.
+These projects are designed as learning tools.  
 
 Feel free to navigate through the sections!
 """)
