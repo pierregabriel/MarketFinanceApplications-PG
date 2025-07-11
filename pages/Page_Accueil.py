@@ -1,34 +1,44 @@
 import streamlit as st
 from datetime import datetime
 
+# Title & subtitle
+st.title("📊 Applications-PG")
+st.subheader("Interactive Streamlit apps to understand market finance")
 
-# Header
-st.title("Pierre-Gabriel BILLAULT - Market Finance Apps")
-st.subheader("Welcome to my personal portfolio")
+# Separator
+st.markdown("---")
 
-# Introduction
+# About section
+st.markdown("## About")
 st.markdown("""
-This site gathers simple applications I built to **explore and better understand market finance**.
+This project gathers small, focused applications built with **Streamlit**  
+to **learn, explain, and visualize market finance concepts**.
 
-You'll find:
-- A focus on **FX (Foreign Exchange)**, one of the first asset classes that caught my interest.
-    - Creation and explication of Forward FX
-- Several tools around **financial options**:
-    - Understanding the Greeks (sensitivities)
-    - A basic option pricer
-    - Visualizing classic option strategies
-
-These projects are designed as learning tools.  
-
-Feel free to navigate through the sections!
+The goal is to **bridge theory and practice** — turning abstract ideas into dynamic tools that make financial logic easier to see and understand.
 """)
 
-# Contact Info
+# Topics
+st.markdown("## Current Topics")
+
+st.markdown("### 🧠 Options")
 st.markdown("""
----
-### Contact
-- 📧 Email: billaultpierregabriel@gmail.com
-- 📱 Téléphone: +33 7 81 17 42 24
+- Black-Scholes option pricer (with **dynamic market data**)
+- Explanation of the **Greeks** (Delta, Gamma, Vega, etc.)
+- **Why Greeks matter** in hedging and strategy
+- Classic **option strategies** based on market views
+""")
+
+st.markdown("### 🌍 FX (Foreign Exchange)")
+st.markdown("""
+- Interactive module on **FX Forwards**
+- Compute and visualize the **Forward Rate Differential (FRD)**
+""")
+
+# Contact
+st.markdown("---")
+st.markdown("## 📬 Contact")
+st.markdown("""
+- 📧 Email: billaultpierregabriel@gmail.com  
 - 🔗 [LinkedIn](https://www.linkedin.com/in/pierre-gabriel-billault/)
 """)
 
