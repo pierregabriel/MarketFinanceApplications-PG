@@ -1,22 +1,39 @@
 # Applications-PG
 
-A Streamlit application designed to simplify and visualize key concepts in market finance. This project aims to make complex topics, particularly options and FX, accessible and dynamic through interactive visualizations.
+**Interactive Streamlit apps to understand market finance **
+
+**App**: [applications-financial-market-pgb.streamlit.app](https://applications-financial-market-pgb.streamlit.app)
 
 ---
 
-## Features
+## About
 
-This application offers interactive tools and visualizations for core market finance products:
+This project gathers small, focused applications built with **Streamlit** to **learn, explain, and visualize market finance concepts**.
 
-* **Options Pricing (Black-Scholes):** An interactive pricer utilizing the Black-Scholes model, with dynamic data integration via `yfinance`.
-* **Understanding Greeks:** Visual explanations of essential metrics (Greeks) and their role in risk management and protection strategies.
-* **Options Strategies:** Dynamic visualization of various strategies (e.g., Bullish, Bearish) based on different market convictions.
-* **FX Analysis:** Upcoming module focusing on FX concepts (FRD FX).
+The goal is to **bridge theory and practice** starting from the core ideas, and turning them into simple, interactive visual tools. I wanted to make finance easier to grasp, especially concepts that are often abstract at first (like options Greeks or FX forwards).
 
 ---
 
-## About This Project
+## Current Topics
 
-The goal of this project is to bridge theoretical finance knowledge with practical visualization. We start with the theoretical foundation and then build interactive Streamlit applications to dynamically represent these concepts.
+### Options
 
-This project was developed using a hybrid approach, leveraging modern AI tools for research, architecture, and coding, alongside traditional software engineering practices.
+- Black-Scholes option pricer (with **dynamic market data** from `yfinance`)
+- Explanation of the **Greeks** (Delta, Gamma, Vega, etc.)
+- **Why Greeks matter** for hedging and risk management
+- Classic **option strategies** for bullish/bearish views
+
+### FX (Foreign Exchange)
+
+- Interactive module on **FX Forwards**
+- Compute and visualize the **Forward Rate Differential (FRD)**
+
+---
+
+##  Contact
+
+- 📧 billaultpierregabriel@gmail.com  
+- 🔗 [LinkedIn](https://www.linkedin.com/in/pierre-gabriel-billault/)
+
+---
+
