@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 
 # Title & subtitle
-st.title("📊 Applications-PG")
+st.title(" Applications-PG")
 st.subheader("Interactive Streamlit apps to understand market finance")
 
 # Separator
@@ -20,7 +20,7 @@ The goal is to **bridge theory and practice** — turning abstract ideas into dy
 # Topics
 st.markdown("## Current Topics")
 
-st.markdown("### 🧠 Options")
+st.markdown("### Options")
 st.markdown("""
 - Black-Scholes option pricer (with **dynamic market data**)
 - Explanation of the **Greeks** (Delta, Gamma, Vega, etc.)
@@ -28,7 +28,7 @@ st.markdown("""
 - Classic **option strategies** based on market views
 """)
 
-st.markdown("### 🌍 FX (Foreign Exchange)")
+st.markdown("### FX (Foreign Exchange)")
 st.markdown("""
 - Interactive module on **FX Forwards**
 - Compute and visualize the **Forward Rate Differential (FRD)**
