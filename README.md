@@ -3,8 +3,7 @@
 Interactive Streamlit apps to understand market finance
 
 
-Click here to see it
-**App**: [applications-financial-market-pgb.streamlit.app](https://applications-financial-market-pgb.streamlit.app)
+Click here to see it : [applications-financial-market-pgb.streamlit.app](https://applications-financial-market-pgb.streamlit.app)
 
 ---
 
