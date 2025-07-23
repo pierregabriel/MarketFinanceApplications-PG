@@ -11,7 +11,7 @@ page_dict = {
         st.Page("pages/options/Pricer.py", title="Pricer"),
         st.Page("pages/options/Strategies.py", title="Strategies")
     ],
-    "💱 FX": [st.Page("pages/FX/FX.py", title="Marché FX")]
+    "💱 FX": [st.Page("pages/FX/FX.py", title="Forward Pricer")]
 }
 
 pg = st.navigation(page_dict)
