@@ -14,7 +14,7 @@ st.markdown("""
 This project gathers small, focused applications built with **Streamlit**  
 to **learn, explain, and visualize market finance concepts**.
 
-The goal is to **bridge theory and practice** — turning abstract ideas into dynamic tools that make financial logic easier to see and understand.
+The goal is to **bridge theory and practice** turning abstract ideas into dynamic tools that make financial logic easier to see and understand.
 """)
 
 # Topics
