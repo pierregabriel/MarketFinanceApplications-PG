@@ -21,13 +21,11 @@ The goal is to **bridge theory and practice** starting from the core ideas, and 
 
 - Black-Scholes option pricer (with **dynamic market data** from `yfinance`)
 - Explanation of the **Greeks** (Delta, Gamma, Vega, etc.)
-- **Why Greeks matter** for hedging and risk management
 - Classic **option strategies** for bullish/bearish views
 
 ### FX (Foreign Exchange)
 
-- Interactive module on **FX Forwards**
-- Compute and visualize the **Forward Rate Differential (FRD)**
+- Compute and comprehend how we calculate the **Forward Rate Differential (FRD)**
 
 ---
 
