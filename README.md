@@ -11,7 +11,7 @@ Click here to see it : [applications-financial-market-pgb.streamlit.app](https:/
 
 This project gathers small, focused applications built with **Streamlit** to **learn, explain, and visualize market finance concepts**.
 
-The goal is to **bridge theory and practice** starting from the core ideas, and turning them into simple, interactive visual tools. I wanted to make finance easier to grasp, especially concepts that are often abstract at first (like options Greeks or FX forwards).
+The goal is to **bridge theory and practice** starting from the core ideas, and turning them into simple, interactive visual tools. 
 
 ---
 
