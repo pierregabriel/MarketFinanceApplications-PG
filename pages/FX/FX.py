@@ -478,7 +478,7 @@ with tab3:
         xaxis_title="Maturity (Years)",
         yaxis_title="Rate (%)",
         height=400,
-        xaxis=dict(range=[-1, 6])  # Limit to 5 years
+        xaxis=dict(range=[-0.5, 5.5])  # Limit to 5 years
     )
     
     st.plotly_chart(fig_comp, use_container_width=True)
