@@ -24,7 +24,6 @@ st.markdown("### Options")
 st.markdown("""
 - Black-Scholes option pricer (with **dynamic market data**)
 - Explanation of the **Greeks** (Delta, Gamma, Vega, etc.)
-- **Why Greeks matter** in hedging and strategy
 - Classic **option strategies** based on market views
 """)
 
