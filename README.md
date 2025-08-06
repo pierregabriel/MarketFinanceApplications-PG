@@ -1,6 +1,6 @@
-# Applications-PG
+# Market Finance Applications
 
-Interactive Streamlit apps to understand market finance
+Interactive Streamlit applications for exploring product market finance
 
 
 Click here to see it : [applications-financial-market-pgb.streamlit.app](https://applications-financial-market-pgb.streamlit.app)
