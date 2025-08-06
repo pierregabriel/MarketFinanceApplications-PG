@@ -1,8 +1,22 @@
 import streamlit as st
 from datetime import datetime
 
-# Title & subtitle
-st.title(" Applications-PG")
+
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1E88E5;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# Main Interface
+st.markdown('<div class="main-header">Market Finance Applications - PG</div>', unsafe_allow_html=True)
 st.subheader("Interactive Streamlit apps to understand market finance")
 
 # Separator
