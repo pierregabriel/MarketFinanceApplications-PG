@@ -144,7 +144,16 @@ st.markdown("""
 # Main Interface
 st.markdown('<div class="main-header">FX Forward Pricing</div>', unsafe_allow_html=True)
 st.markdown("---")
-st.info("Please note: The market data used in this application is static and was last updated on August 1, 2025. It is for illustrative purposes only and does not reflect real-time market conditions.")
+st.info("""
+Please note: The market data used in this application is static and was last updated on **August 1, 2025**.  
+It is for illustrative purposes only and does not reflect real-time market conditions.
+
+**Sources:**
+- [Euribor Rates](https://www.euribor-rates.eu/fr/taux-euribor-actuels/)
+- [CME Term SOFR](https://www.global-rates.com/en/interest-rates/cme-term-sofr/)
+- [Bloomberg - US Bonds](https://www.bloomberg.com/markets/rates-bonds/government-bonds/us)
+- [TradingView - EU Bonds](https://www.tradingview.com/markets/bonds/prices-eu/)
+""")
 
 # Tabs for navigation
 tab1, tab2, tab3, tab4 = st.tabs([
