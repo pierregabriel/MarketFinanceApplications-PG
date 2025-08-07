@@ -209,7 +209,7 @@ with tab1:
         """)
 
     st.success("""
-    **🎯 Key Learning Path:** In this application, we will build step-by-step the pricing of a EUR/USD forward, 
+    ** Key Learning Path:** In this application, we will build step-by-step the pricing of a EUR/USD forward, 
     starting from market data, constructing yield curves through interpolation methods, and finally calculating 
     the forward price. **The yield curve construction is crucial** as it allows us to derive interest rates 
     for any maturity up to 5 years, enabling precise forward pricing for multiple time horizons.
@@ -235,7 +235,7 @@ with tab2:
 
     # Important disclaimer about bonds
     st.warning("""
-    **⚠️ Important Note on Bond Data:** In this application, we treat government bonds (EU Bonds and 
+    ** Important Note on Bond Data:** In this application, we treat government bonds (EU Bonds and 
     Treasury Yields) as zero-coupon bonds for simplification purposes. In practice, you would need to use the 
     **bootstrap method** to extract zero-coupon rates from coupon-bearing bonds. This simplified approach is 
     used here for educational purposes.
