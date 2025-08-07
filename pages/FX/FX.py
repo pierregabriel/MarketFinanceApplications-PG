@@ -492,15 +492,14 @@ with tab3:
     
     st.plotly_chart(fig_comp, use_container_width=True)
     
-    st.info("""
-    **Method Differences:**
-    - **Linear:** Simple straight lines between points.
-    - **Cubic:** Smoother curves using cubic splines, better for capturing curve shape.
-    - **Nelson-Siegel:** A parametric model that fits a specific functional form to the curve, often used for forecasting.
-    
-    **🎯 Key Point:** The choice of interpolation method affects the derived rates for intermediate maturities, 
-    which directly impacts forward pricing accuracy.
-    """)
+   st.info("""
+**Method Differences:**
+- **Linear:** Simple straight lines between points (implemented here using a standard library).
+- **Cubic:** Smoother curves using cubic splines, better for capturing curve shape. Although I studied this method in class and can reproduce it manually, I chose to use a library here for simplicity — implementing it from scratch wasn’t the main focus of this application.
+- **Nelson-Siegel:** A parametric model that fits a specific functional form to the curve, often used for forecasting. I implemented a simplified version of this model, sufficient for demonstration purposes.
+
+** Key Point:** The choice of interpolation method affects the derived rates for intermediate maturities, which directly impacts forward pricing accuracy.
+""")
 
 # Page 4: Forward Pricing
 with tab4:
