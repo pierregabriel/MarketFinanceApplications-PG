@@ -1,4 +1,4 @@
-### 1. Option Greeks Visualizer 📈
+### 1. Option Greeks Visualizer 
 
 * An interactive learning tool to visualize how an option's value and its sensitivities (the Greeks) behave.
 * It plots **Delta, Gamma, Theta, Vega, and Rho** against the underlying stock price using the Black-Scholes model.
@@ -7,7 +7,7 @@
 
 ---
 
-### 2. Options Calculator & Payoff Diagram 📊
+### 2. Options Calculator & Payoff Diagram 
 
 * A practical tool for pricing a specific stock option.
 * It fetches the **current stock price** using its ticker symbol and automatically calculates its historical volatility.
@@ -16,7 +16,7 @@
 
 ---
 
-### 3. Options Strategy Visualizer 🎭
+### 3. Options Strategy Visualizer 
 
 * An educational visualizer for common, multi-leg options strategies.
 * It features a built-in library of strategies like **Straddles, Iron Condors, Spreads, and Butterflies**.
