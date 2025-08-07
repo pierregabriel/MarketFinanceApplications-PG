@@ -122,9 +122,9 @@ def get_rate_for_maturity(currency, maturity_years, curve_method, market_data_df
     rate_at_maturity = np.interp(maturity_years, interp_maturities, interpolated_rates)
     return rate_at_maturity
 
-def calculate_forward_rate(spot, r_dom, r_for, time_to_maturity):
+def calculate_forward_rate(spot, r_quote, r_base, time_to_maturity):
     """Calculates the FX forward rate"""
-    forward = spot * (1 + r_dom * time_to_maturity) / (1 + r_for * time_to_maturity)
+    forward = spot * (1 + r_quote * time_to_maturity) / (1 + r_base * time_to_maturity)
     return forward
 
 
@@ -188,14 +188,14 @@ with tab1:
         **Basic Formula:**
         """)
         
-        st.latex(r"F = S \times \frac{1 + r_{dom} \times T}{1 + r_{for} \times T}")
+        st.latex(r"F = S \times \frac{1 + r_{quote} \times T}{1 + r_{base} \times T}")
         
         st.write("""
         Where:
         - **F** = Forward Price
         - **S** = Current Spot Rate
-        - **r_dom** = Domestic Currency Interest Rate
-        - **r_for** = Foreign Currency Interest Rate
+        - **r_quote** = Quote Currency Interest Rate
+        - **r_base** = Base Currency Interest Rate
         - **T** = Time to Maturity
         """)
 
