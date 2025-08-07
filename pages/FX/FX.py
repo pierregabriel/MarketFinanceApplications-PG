@@ -630,14 +630,6 @@ with tab4:
     st.dataframe(comparison_df_forwards, use_container_width=True)
     
 
-    st.success("""
-    **🎯 Key Insight:** The yield curve construction enables us to calculate forward rates for **any maturity up to 5 years**, 
-    not just the standard market tenors. This flexibility is crucial for precise hedging and pricing of custom-dated forward contracts.
-    
-    **📊 Observation:** Notice how the forward rate term structure reflects the interest rate differential between EUR and USD 
-    across different maturities, demonstrating the direct relationship between yield curves and forward pricing.
-    """)
-
 # Footer
 st.markdown("---")
 st.markdown(
