@@ -216,7 +216,7 @@ with tab1:
     """)
     
     st.info("""
-    **📈 The Importance of Yield Curve Construction:**
+    ** The Importance of Yield Curve Construction:**
     
     Accurate forward pricing requires precise interest rates for the specific maturity. Since market data is 
     only available for certain tenors (1M, 3M, 6M, 12M, 2Y, 5Y), we use interpolation methods to construct 
