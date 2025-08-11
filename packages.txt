@@ -8,3 +8,4 @@ libxss1
 libasound2
 libdbus-glib-1-2
 libxtst6
+google-chrome-stable
