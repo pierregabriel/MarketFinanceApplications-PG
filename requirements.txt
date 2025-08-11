@@ -8,3 +8,11 @@ plotly
 beautifulsoup4
 lxml
 curl_cffi
+re
+json
+json5
+requests
+Beautifulsoup
+selenium
+webdriver_manager
+forex_python
