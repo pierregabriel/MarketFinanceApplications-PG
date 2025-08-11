@@ -148,6 +148,8 @@ st.info("""
 Please note: The market data used in this application is static and was last updated on **August 1, 2025**.  
 It is for illustrative purposes only and does not reflect real-time market conditions.
 
+The project includes a functional web scraping module to collect live data. However, deploying it on the Streamlit platform presented significant technical challenges. Therefore, this online version uses a static dataset to ensure stability. For those interested in the process, the source code for scraping the four data sources is available in the project's GitHub repository.
+
 **Sources:**
 - [Euribor Rates](https://www.euribor-rates.eu/fr/taux-euribor-actuels/)
 - [CME Term SOFR](https://www.global-rates.com/en/interest-rates/cme-term-sofr/)
