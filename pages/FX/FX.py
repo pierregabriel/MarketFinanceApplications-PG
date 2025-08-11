@@ -6,7 +6,7 @@ import plotly.express as px
 from datetime import datetime, timedelta
 import math
 from scipy.interpolate import interp1d
-from ...Scraping import collect_all_financial_data
+from pages.Scraping import collect_all_financial_data
 
 # Utility Functions
 @st.cache_data(ttl=300)  # Cache for 5 minutes to avoid too frequent scraping
