@@ -6,67 +6,12 @@ import plotly.express as px
 from datetime import datetime, timedelta
 import math
 from scipy.interpolate import interp1d
-from pages.Scraping import collect_all_financial_data
+
 
 # Utility Functions
-@st.cache_data(ttl=300)  # Cache for 5 minutes to avoid too frequent scraping
-def get_live_market_data():
-    """Fetch live market data using the scraping module and transform it to the expected format"""
-    try:
-        # Get scraped data
-        scraped_df = collect_all_financial_data()
-        
-        if scraped_df.empty:
-            st.error("❌ Unable to fetch live market data. Using fallback data.")
-            return get_fallback_market_data()
-        
-        # Transform scraped data to expected format
-        data = {
-            'Instrument': [],
-            'Rate/Price': [],
-            'Maturity': [],
-            'Type': [],
-            'Currency': []
-        }
-        
-        # Mapping from scraped data to our format
-        mapping = {
-            'EUR/USD Spot': ('Spot EUR/USD', 'Spot', 'FX', None),
-            'Euribor 1 Mois': ('EURIBOR 1M', '1M', 'Short Rate', 'EUR'),
-            'Euribor 3 Mois': ('EURIBOR 3M', '3M', 'Short Rate', 'EUR'),
-            'Euribor 6 Mois': ('EURIBOR 6M', '6M', 'Short Rate', 'EUR'),
-            'Euribor 12 Mois': ('EURIBOR 12M', '12M', 'Short Rate', 'EUR'),
-            'Obligation Allemande 2 ans': ('EU Bonds 2Y', '2Y', 'Bond', 'EUR'),
-            'Obligation Allemande 5 ans': ('EU Bonds 5Y', '5Y', 'Bond', 'EUR'),
-            'SOFR 1 Mois': ('SOFR 1M', '1M', 'Short Rate', 'USD'),
-            'SOFR 3 Mois': ('SOFR 3M', '3M', 'Short Rate', 'USD'),
-            'SOFR 6 Mois': ('SOFR 6M', '6M', 'Short Rate', 'USD'),
-            'SOFR 12 Mois': ('SOFR 12M', '12M', 'Short Rate', 'USD'),
-            'US Treasury 2 ans': ('Treasury Yields 2Y', '2Y', 'Bond', 'USD'),
-            'US Treasury 5 ans': ('Treasury Yields 5Y', '5Y', 'Bond', 'USD')
-        }
-        
-        # Transform the data
-        for _, row in scraped_df.iterrows():
-            indicator = row['Indicateur']
-            value = row['Valeur']
-            
-            if indicator in mapping:
-                instrument, maturity, type_, currency = mapping[indicator]
-                data['Instrument'].append(instrument)
-                data['Rate/Price'].append(float(value))
-                data['Maturity'].append(maturity)
-                data['Type'].append(type_)
-                data['Currency'].append(currency)
-        
-        return pd.DataFrame(data)
-        
-    except Exception as e:
-        st.error(f"❌ Error fetching live data: {str(e)}. Using fallback data.")
-        return get_fallback_market_data()
-
-def get_fallback_market_data():
-    """Fallback static market data in case scraping fails"""
+@st.cache_data
+def get_initial_market_data():
+    """Static market data as of August 1, 2025 for EUR/USD and interest rates"""
     data = {
         'Instrument': [
             'Spot EUR/USD',
@@ -182,6 +127,7 @@ def calculate_forward_rate(spot, r_quote, r_base, time_to_maturity):
     forward = spot * (1 + r_quote * time_to_maturity) / (1 + r_base * time_to_maturity)
     return forward
 
+
 st.markdown("""
 <style>
     .main-header {
@@ -194,36 +140,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
 # Main Interface
-st.markdown('<div class="main-header">FX Forward Pricing - Live Data</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">FX Forward Pricing</div>', unsafe_allow_html=True)
 st.markdown("---")
+st.info("""
+Please note: The market data used in this application is static and was last updated on **August 1, 2025**.  
+It is for illustrative purposes only and does not reflect real-time market conditions.
 
-st.info(f"""
-🔴 **LIVE DATA**: This application now uses **real-time market data** scraped from multiple financial sources.
-
-**Data Sources:**
-- **Euribor Rates**: [euribor-rates.eu](https://www.euribor-rates.eu/fr/taux-euribor-actuels/)
-- **SOFR Rates**: [global-rates.com](https://www.global-rates.com/en/interest-rates/cme-term-sofr/)
-- **US Treasury Yields**: [Bloomberg](https://www.bloomberg.com/markets/rates-bonds/government-bonds/us)
-- **German Bond Yields**: [TradingView](https://www.tradingview.com/markets/bonds/prices-eu/)
-- **EUR/USD Exchange Rate**: Live forex data
-
-⚠️ **Note**: Data is cached for 5 minutes to optimize performance. Click "Refresh Data" to get the latest rates.
-
-**Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Sources:**
+- [Euribor Rates](https://www.euribor-rates.eu/fr/taux-euribor-actuels/)
+- [CME Term SOFR](https://www.global-rates.com/en/interest-rates/cme-term-sofr/)
+- [Bloomberg - US Bonds](https://www.bloomberg.com/markets/rates-bonds/government-bonds/us)
+- [TradingView - EU Bonds](https://www.tradingview.com/markets/bonds/prices-eu/)
 """)
-
-# Add refresh button
-col1, col2, col3 = st.columns([1, 1, 1])
-with col2:
-    if st.button("🔄 Refresh Data", type="primary"):
-        st.cache_data.clear()
-        st.rerun()
 
 # Tabs for navigation
 tab1, tab2, tab3, tab4 = st.tabs([
     "1. Introduction", 
-    "2. Live Market Data", 
+    "2. Market Data", 
     "3. Curve Construction", 
     "4. Forward Pricing"
 ])
@@ -274,40 +209,39 @@ with tab1:
         """)
 
     st.success("""
-    **Key Learning Path:** In this application, we will build step-by-step the pricing of a EUR/USD forward, 
-    starting from **live market data**, constructing yield curves through interpolation methods, and finally calculating 
+    ** Key Learning Path:** In this application, we will build step-by-step the pricing of a EUR/USD forward, 
+    starting from market data, constructing yield curves through interpolation methods, and finally calculating 
     the forward price. **The yield curve construction is crucial** as it allows us to derive interest rates 
     for any maturity up to 5 years, enabling precise forward pricing for multiple time horizons.
     """)
     
     st.info("""
-    **The Importance of Yield Curve Construction:**
+    ** The Importance of Yield Curve Construction:**
     
     Accurate forward pricing requires precise interest rates for the specific maturity. Since market data is 
     only available for certain tenors (1M, 3M, 6M, 12M, 2Y, 5Y), we use interpolation methods to construct 
     complete yield curves, enabling forward pricing for **any date within our 5-year horizon**.
     
-    **Live Market Data** → **Curve Construction** → **Forward Pricing for Any Maturity**
+    **Market Data** → **Curve Construction** → **Forward Pricing for Any Maturity**
     """)
 
 # Page 2: Market Data
 with tab2:
-    st.header("Live Market Data")
+    st.header("Market Data")
     
-    # Load live data or retrieve from session state
+    # Load initial data or retrieve from session state
     if 'market_data' not in st.session_state:
-        with st.spinner("🔄 Fetching live market data..."):
-            st.session_state['market_data'] = get_live_market_data()
-    
+        st.session_state['market_data'] = get_initial_market_data()
+
     # Important disclaimer about bonds
     st.warning("""
-    **Important Note on Bond Data:** In this application, we treat government bonds (German Bonds and 
+    ** Important Note on Bond Data:** In this application, we treat government bonds (EU Bonds and 
     Treasury Yields) as zero-coupon bonds for simplification purposes. In practice, you would need to use the 
     **bootstrap method** to extract zero-coupon rates from coupon-bearing bonds. This simplified approach is 
     used here for educational purposes.
     """)
     
-    st.subheader("Live Market Data Table (Editable)")
+    st.subheader("Market Data Table (Editable)")
     st.write("You can directly modify the 'Rate/Price' column in the table below.")
     
     # Make the dataframe editable
@@ -351,7 +285,7 @@ with tab2:
                 eur_data_display, 
                 x='Display_Name', 
                 y='Rate/Price',
-                title="EUR Rates (%) - Live Data", 
+                title="EUR Rates (%)", 
                 color='Type',
                 color_discrete_map={'Short Rate': '#1e9d9b', 'Bond': '#64ee76'}
             )
@@ -369,7 +303,7 @@ with tab2:
                 usd_data_display, 
                 x='Display_Name', 
                 y='Rate/Price',
-                title="USD Rates (%) - Live Data", 
+                title="USD Rates (%)", 
                 color='Type',
                 color_discrete_map={'Short Rate': '#bff9d3', 'Bond': '#93f6d6'}
             )
@@ -381,17 +315,17 @@ with tab2:
     **Explanations:**
     - **EURIBOR**: Euro Interbank Offered Rate - benchmark rate for EUR
     - **SOFR**: Secured Overnight Financing Rate - replacement for USD LIBOR
-    - **German Bonds**: German government bond yields (treated as zero-coupon for simplification)
+    - **EU Bonds**: European government bond yields (treated as zero-coupon for simplification)
     - **Treasury Yields**: US Treasury bond yields (treated as zero-coupon for simplification)
-    - **FX**: Live spot exchange rate EUR/USD
+    - **FX**: Spot exchange rate EUR/USD
     """)
 
 # Page 3: Curve Construction
 with tab3:
-    st.header("Yield Curve Construction (5-Year Horizon) - Live Data")
+    st.header("Yield Curve Construction (5-Year Horizon)")
     
     # Retrieve dynamic market data
-    current_market_data = st.session_state.get('market_data', get_live_market_data())
+    current_market_data = st.session_state.get('market_data', get_initial_market_data())
     
     # Filter for relevant EUR and USD rates for curve construction (5Y max)
     eur_curve_instruments = ['EURIBOR 1M', 'EURIBOR 3M', 'EURIBOR 6M', 'EURIBOR 12M', 'EU Bonds 2Y', 'EU Bonds 5Y']
@@ -423,12 +357,12 @@ with tab3:
             ["linear", "cubic", "nelson_siegel"],
             format_func=lambda x: {
                 "linear": "Linear",
-                "cubic": "Cubic Spline",
+                "cubic": "Cubic Spline", 
                 "nelson_siegel": "Nelson-Siegel"
             }[x],
             key="curve_interp_method"
         )
-
+    
     with col2:
         st.write(f"""
         **{method.replace('_', '-').title()}**:
@@ -491,7 +425,7 @@ with tab3:
         ))
     
     fig.update_layout(
-        title=f"Live Yield Curves (5Y Horizon) - Method: {method.replace('_', '-').title()}",
+        title=f"Yield Curves (5Y Horizon) - Method: {method.replace('_', '-').title()}",
         xaxis_title="Maturity (Years)",
         yaxis_title="Rate (%)",
         height=500,
@@ -511,9 +445,9 @@ with tab3:
             ["EUR", "USD"],
             key="comparison_currency_select"
         )
-
+    
     with col2:
-        st.write(f"**Comparing interpolation methods for {comparison_currency} rates (Live Data)**")
+        st.write(f"**Comparing interpolation methods for {comparison_currency} rates**")
     
     methods_comparison = ['linear', 'cubic', 'nelson_siegel']
     colors = ['green', 'orange', 'purple']
@@ -549,7 +483,7 @@ with tab3:
         ))
     
     fig_comp.update_layout(
-        title=f"Comparison of Interpolation Methods ({comparison_currency}) - Live Data",
+        title=f"Comparison of Interpolation Methods ({comparison_currency})",
         xaxis_title="Maturity (Years)",
         yaxis_title="Rate (%)",
         height=400,
@@ -557,22 +491,21 @@ with tab3:
     )
     
     st.plotly_chart(fig_comp, use_container_width=True)
-
     st.info("""
-    **Method Differences:**
-    - **Linear:** Simple straight lines between points (implemented here using a standard library).
-    - **Cubic:** Smoother curves using cubic splines, better for capturing curve shape. Although I studied this method in class and can reproduce it manually, I chose to use a library here for simplicity — implementing it from scratch wasn't the main focus of this application.
-    - **Nelson-Siegel:** A parametric model that fits a specific functional form to the curve, often used for forecasting. I implemented a simplified version of this model, sufficient for demonstration purposes.
+**Method Differences:**
+- **Linear:** Simple straight lines between points (implemented here using a standard library).
+- **Cubic:** Smoother curves using cubic splines, better for capturing curve shape. Although I studied this method in class and can reproduce it manually, I chose to use a library here for simplicity — implementing it from scratch wasn’t the main focus of this application.
+- **Nelson-Siegel:** A parametric model that fits a specific functional form to the curve, often used for forecasting. I implemented a simplified version of this model, sufficient for demonstration purposes.
 
-    **Key Point:** The choice of interpolation method affects the derived rates for intermediate maturities, which directly impacts forward pricing accuracy.
-    """)
+** Key Point:** The choice of interpolation method affects the derived rates for intermediate maturities, which directly impacts forward pricing accuracy.
+""")
 
 # Page 4: Forward Pricing
 with tab4:
-    st.header("FX Forward Pricing - Live Data")
+    st.header("FX Forward Pricing")
     
     # Retrieve dynamic market data
-    current_market_data = st.session_state.get('market_data', get_live_market_data())
+    current_market_data = st.session_state.get('market_data', get_initial_market_data())
     spot_from_market_data = current_market_data[current_market_data['Instrument'] == 'Spot EUR/USD']['Rate/Price'].iloc[0]
     
     col1, col2 = st.columns([1, 1])
@@ -581,7 +514,7 @@ with tab4:
         st.subheader("Forward Parameters")
         
         # Modifiable parameters
-        spot = st.number_input("Spot EUR/USD (Live)", value=float(spot_from_market_data), step=0.0001, format="%.4f", key="spot_forward_pricing_input")
+        spot = st.number_input("Spot EUR/USD", value=float(spot_from_market_data), step=0.0001, format="%.4f", key="spot_forward_pricing_input")
         
         # Flexible maturity input
         st.write("**Maturity Selection:**")
@@ -633,7 +566,7 @@ with tab4:
         )
 
     with col2:
-        st.subheader("Forward Calculation (Live Data)")
+        st.subheader("Forward Calculation")
         
         # Get rates based on user choices
         r_eur_calc = get_rate_for_maturity('EUR', T, eur_curve_method, current_market_data) / 100
@@ -665,8 +598,8 @@ with tab4:
             st.write("➡️ EUR rates > USD rates")
 
     # Comprehensive Forward Price Comparison
-    st.subheader("Forward Price Comparison Across Multiple Maturities (Live Data)")
-    st.write("See how forward prices change across different maturities using the selected curve methods and live market data")
+    st.subheader("Forward Price Comparison Across Multiple Maturities")
+    st.write("See how forward prices change across different maturities using the selected curve methods")
     
     # Extended maturity list
     comparison_maturities = [
@@ -694,16 +627,17 @@ with tab4:
     
     comparison_df_forwards = pd.DataFrame(comparison_results)
     st.dataframe(comparison_df_forwards, use_container_width=True)
+    
 
 # Footer
 st.markdown("---")
 st.markdown(
-    """
-    <div style="text-align: center;">
-        <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
-            PGB - Live Data Version
-        </a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        """
+        <div style="text-align: center;">
+            <a href="https://www.linkedin.com/in/pierre-gabriel-billault/" target="_blank" style="text-decoration: none; font-size: 20px;">
+                PGB
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
