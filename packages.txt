@@ -1,4 +1,3 @@
-# For Headless Chrome & Selenium
 libglib2.0-0
 libnss3
 libgconf-2-4
