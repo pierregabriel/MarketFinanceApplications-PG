@@ -9,6 +9,3 @@ beautifulsoup4
 lxml
 requests
 json5
-selenium
-webdriver_manager
-forex_python
